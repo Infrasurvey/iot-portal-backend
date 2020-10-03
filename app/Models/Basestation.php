@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 use Auth;
+use Rower;
 
 class Basestation extends Model
 {
@@ -15,4 +16,9 @@ class Basestation extends Model
     protected $guarded = [
         'id'
     ];
+
+    public function rower()
+    {
+        return $this->hasMany('App\Models\Rower');
+    }
 }

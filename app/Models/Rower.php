@@ -17,6 +17,6 @@ class Rower extends Model
     ];
 
     function basestation() {
-        return $this->hasMany(Basestation::class);
+        return $this->belongsTo(Basestation::class);
     }
 }
