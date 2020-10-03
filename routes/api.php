@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('basestation/{id}', 'BasestationController@getBasestation');
+Route::get('basestations', 'BasestationController@getBasestations');
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();

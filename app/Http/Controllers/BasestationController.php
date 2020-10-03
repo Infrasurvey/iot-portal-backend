@@ -12,6 +12,10 @@ class BasestationController extends Controller
         
     }
 
+    function getBasestations(){
+        return Basestation::get()->all();
+    }
+
     function getBasestation($id){
         return Basestation::with('rower')->find($id);
     }
