@@ -17,6 +17,10 @@ class Basestation extends Model
         'id'
     ];
 
+    protected $withCount = [
+        'rower'
+    ];
+
     public function rower()
     {
         return $this->hasMany('App\Models\Rower');

@@ -1,6 +1,6 @@
 <template>
   <div>
-      <h2 class="mt-4">Base station 1 rower</h2>
+      <h2 class="mt-4">Base station {{ basestation_id }} rower</h2>
       <b-table
         v-if="loaded"
         striped

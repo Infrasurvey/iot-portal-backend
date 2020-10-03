@@ -30,6 +30,10 @@ export default {
             key: "name",
             label: "Name",
             sortable: true,
+          },
+          {
+            key: "rower_count",
+            label: "Nbr rower"
           }
         ],
       },
