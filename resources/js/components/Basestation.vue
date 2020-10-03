@@ -7,15 +7,7 @@
         hover
         :items="basestations.datas"
         :fields="basestations.fields"
-      >
-      </b-table>
-
-      <h2 class="mt-4">Base station 1 rower</h2>
-      <b-table
-        v-if="loaded"
-        striped
-        hover
-        :items="basestation.rower"
+        @row-clicked="onClick"
       >
       </b-table>
   </div>
@@ -26,7 +18,6 @@ export default {
   data() {
     return {
       loaded: false,
-      basestation: null,
       basestations: {
         datas: null,
         fields: [
@@ -45,22 +36,15 @@ export default {
     }
   },
   methods: {
+    onClick(item, index, event) {
+      this.$router.push({ name: 'rower', params: { basestation_id: item.id } })
+    },
+
     loadTest() {
       axios
         .get("/api/basestations")
         .then((resp) => {
           this.basestations.datas = resp.data
-        })
-        .catch((error) => {
-          console.log(error)
-        })
-    },
-
-    loadInfos() {
-      axios
-        .get("/api/basestation/1")
-        .then((resp) => {
-          this.basestation = resp.data
           this.loaded = true
         })
         .catch((error) => {
@@ -70,7 +54,6 @@ export default {
   },
   mounted() {
     this.loadTest()
-    this.loadInfos()
   }
 }
 </script>
