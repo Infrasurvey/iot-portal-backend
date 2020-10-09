@@ -32,8 +32,8 @@ export default {
             sortable: true,
           },
           {
-            key: "rower_count",
-            label: "Nbr rower"
+            key: "DeviceRoverCount",
+            label: "Number of Rovers"
           }
         ],
       },
@@ -41,15 +41,16 @@ export default {
   },
   methods: {
     onClick(item, index, event) {
-      this.$router.push({ name: 'rower', params: { basestation_id: item.id } })
+      this.$router.push({ name: 'DeviceRoverCount ', params: { basestation_id: item.id } })
     },
 
     loadTest() {
       axios
         .get("/api/basestations")
         .then((resp) => {
+          console.log(resp.data)
           this.basestations.datas = resp.data
-          this.loaded = true
+          this.loaded = true;
         })
         .catch((error) => {
           console.log(error)
