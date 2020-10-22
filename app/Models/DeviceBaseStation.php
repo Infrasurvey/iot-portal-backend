@@ -18,8 +18,8 @@ class DeviceBaseStation extends Model
         return $this->rovers()->count();
     }
 
-    public function rovers()
+    public function device()
     {
-        return $this->hasMany('App\Models\DeviceRover');
+        return $this->morphOne('App\Models\Device', 'is_device');
     }
 }

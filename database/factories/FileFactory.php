@@ -23,7 +23,8 @@ class FileFactory extends Factory
     {
         return [
             'name' => 'toto',
-            'path' => 'tutu'
+            'path' => 'tutu',
+            'ftp_upload_date' => $this->faker->dateTime($max = 'now', $timezone = null)
         ];
     }
 }

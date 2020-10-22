@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateConfigurationsTable extends Migration
+class CreateConfigurationBaseStationsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CreateConfigurationsTable extends Migration
      */
     public function up()
     {
-        Schema::create('configurations', function (Blueprint $table) {
+        Schema::create('configuration_base_stations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('device_base_station_id')->constrained();
             $table->foreignId('file_id')->constrained();
@@ -38,6 +38,6 @@ class CreateConfigurationsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('configurations');
+        Schema::dropIfExists('configuration_base_stations');
     }
 }

@@ -15,11 +15,11 @@ class CreateDevicesTable extends Migration
     {
         Schema::create('devices', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('file_id')->constrained();
-            $table->bigInteger('table_id');
             $table->string('table_type');
-            $table->double('battery_voltage');
-            $table->bigInteger('firmware_version');
+            $table->bigInteger('table_id');
+            $table->bigInteger('system_id');
+            $table->string('available_memory')->nullable();
+            $table->string('firmware_version')->nullable();
             $table->timestamps();
         });
     }

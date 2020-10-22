@@ -15,7 +15,13 @@ class CreateDeviceBaseStationsTable extends Migration
     {
         Schema::create('device_base_stations', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->bigInteger('user_id')->nullable();
+            $table->string('name')->nullable();
+            $table->string('bbb_mac_address')->nullable();
+            $table->string('bbb_version')->nullable();
+            $table->string('bbb_md5')->nullable();
+            $table->string('rnx2rtkp_md5')->nullable();
+            $table->string('convbin_md5')->nullable();
             $table->timestamps();
         });
     }

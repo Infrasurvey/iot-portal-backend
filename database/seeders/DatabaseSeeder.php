@@ -18,8 +18,6 @@ class DatabaseSeeder extends Seeder
         \App\Models\DeviceBaseStation::factory(15)->create();
         \App\Models\DeviceRover::factory(100)->create();
         \App\Models\Device::factory(115)->create();
-        \App\Models\Configuration::factory(15)->create();
-        \App\Models\Inclination::factory(100)->create();
         \App\Models\Position::factory(100)->create();
     }
 }

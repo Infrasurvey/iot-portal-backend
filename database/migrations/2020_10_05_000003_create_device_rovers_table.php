@@ -16,8 +16,10 @@ class CreateDeviceRoversTable extends Migration
         Schema::create('device_rovers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('device_base_station_id')->constrained();
-            $table->bigInteger('gps_id');
-            $table->double('rssi');
+            $table->string('unique_id')->nullable();
+            $table->double('coordinate_x')->nullable();
+            $table->double('coordinate_y')->nullable();
+            $table->double('coordinate_z')->nullable();
             $table->timestamps();
         });
     }
