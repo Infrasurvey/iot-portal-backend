@@ -11,7 +11,7 @@ use App\Models\MeasureDevice;
 use App\Models\MeasureRover;
 use App\Models\Position;
 
-class FetchDeviceData extends Command
+abstract class FetchDeviceData extends Command
 {
     var $cMyRxInfoKeys = array(
         "GEOMON rxInfo" =>"version"
@@ -55,20 +55,6 @@ class FetchDeviceData extends Command
     var $cStateFillBaseStation   = 1;
 
     /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'geomon:fetch';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Do not use!';
-
-    /**
      * Create a new command instance.
      *
      * @return void
@@ -85,35 +71,46 @@ class FetchDeviceData extends Command
      */
     public function handle()
     {
-        // Geomon credentials
-        $ftpHost = "motilis.com";
-        $ftpUser = "geomon";
-        $ftpPassword = "laurent";
+        echo("Nice to do nothing... DO NOT USE!\n");
+    }
 
-        // Connect to the Geomon FTP server
-        if (($ftp = ftp_connect($ftpHost)) == FALSE)
-        {
-            echo("Unable to connect to the FTP server!\n");
-            ftp_close($ftp);
-            return;
-        }
+    /**
+     * Connect to folder
+     */
+    abstract protected function connect();
 
-        // Login to the server
-        if (ftp_login($ftp, $ftpUser, $ftpPassword) == FALSE)
-        {
-            echo("Unable to log to the FTP server as $ftpUser. Wrong username or password.\n");
-            ftp_close($ftp);
-            return;
-        }
+    /**
+     * Connect to folder
+     */
+    abstract protected function listDir($dirPath);
 
-        // Switch to passive mode
-        ftp_pasv($ftp, true) or die("Cannot switch to passive mode");
+    /**
+     * Connect to folder
+     */
+    abstract protected function getFile($filePath);
+
+    /**
+     * Connect to folder
+     */
+    abstract protected function getFileModificationTime($filePath);
+
+    /**
+     * Connect to folder
+     */
+    abstract protected function disconnect();
+
+    /**
+     * Fetch data 
+     */
+    protected function fetch()
+    {
+        // Connect to the remote file system
+        $this->connect();
 
         // Get all path of all Geomon Base Stations in /data/Geomon/
-        $baseStationPaths = ftp_nlist($ftp , "/data/Geomon/");
-        sort($baseStationPaths);
-
-        // Find all the base stations present in the FTP server
+        $baseStationPaths = $this->listDir("/data/Geomon/");
+        
+        // Find all the base stations present in the actual the folder "/data/Geomon/"
         for ($i = 0; $i < count($baseStationPaths); $i++)
         {
             // Check if the current tested path
@@ -140,8 +137,7 @@ class FetchDeviceData extends Command
             $baseStation_id = intval(substr($baseStation, -4));
 
             // Get all the measure paths concerning this base station
-            $paths = ftp_nlist($ftp , $baseStation);
-            sort($paths);
+            $paths = $this->listDir($baseStation);
 
             // Keep only the folders (remvove other suspicious folder or files)
             $measurePathTemplate = "/data/Geomon/GM_BASE_XXXX/YYMMDD_HH";
@@ -155,7 +151,7 @@ class FetchDeviceData extends Command
                 }
             }
 
-            // Get the last processed measure date for this base stations
+            // Get the last processed measure date for this base station
             if (($device = Device::where([['system_id', $baseStation_id],['table_type', 'device_base_stations']])->first()) != null)
             {
                 if (($lastMeasureDevice = MeasureDevice::where('device_id', $device->id)->latest('file_id')->first()) != null)
@@ -178,7 +174,7 @@ class FetchDeviceData extends Command
             // For all not processed paths
             foreach($measurePaths as $measurePath)
             {
-                $measureFiles = ftp_nlist($ftp, $measurePath);
+                $measureFiles = $this->listDir($measurePath);
 
                 // Find the rxInfo file
                 $rxInfoPath = null;
@@ -197,17 +193,9 @@ class FetchDeviceData extends Command
                 }
 
                 // Download the rxInfo file
-                $file = fopen("temp.txt", "w");
-                if (ftp_fget($ftp, $file, $rxInfoPath, FTP_ASCII) == FALSE)
-                {
-                    echo("File $rxInfoPath not found.\n");
-                    ftp_close($ftp);
-                    return;
-                }
+                $myFileRows = $this->getFile($rxInfoPath);
 
                 // Parse the rxInfo file
-                $myFileRows = file('temp.txt');
-                fclose($file);
                 $i = 0;
                 foreach ($myFileRows as $myFileRow)
                 {
@@ -246,13 +234,11 @@ class FetchDeviceData extends Command
                     $file->type = "rxInfo";
                     $file->version = $rxInfo[0][1];
                     $file->path = $path;
-                    
+                    $file->upload_time = $this->getFileModificationTime($rxInfoPath);
                     $file->creation_time = "20" . $rxInfoExplodedPath[4][0] . $rxInfoExplodedPath[4][1] . "-" .
                                                   $rxInfoExplodedPath[4][2] . $rxInfoExplodedPath[4][3] . "-" .
                                                   $rxInfoExplodedPath[4][4] . $rxInfoExplodedPath[4][5] . " " .
                                                   $rxInfoExplodedPath[4][7] . $rxInfoExplodedPath[4][8] . ":00:00";
-    
-                    $file->upload_time = date("Y-m-d h:i:s", ftp_mdtm($ftp, $rxInfoPath));
                 }
                 
                 $file->save();
@@ -413,8 +399,8 @@ class FetchDeviceData extends Command
             echo("Base station $baseStation processed\n");
         }
     
-        // Close the FTP connection
-        ftp_close($ftp);
+        // Close the connection with the remote file system
+        $this->disconnect();
         return;
     }
 }
