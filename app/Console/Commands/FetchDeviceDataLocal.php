@@ -42,7 +42,7 @@ class FetchDeviceDataLocal extends FetchDeviceData
      */
     protected function listDir($dirPath)
     {
-
+        return scandir($filePath, SCANDIR_SORT_ASCENDING);
     }
 
     /**
@@ -50,7 +50,7 @@ class FetchDeviceDataLocal extends FetchDeviceData
      */
     protected function getFile($filePath)
     {
-
+        return file($filePath);
     }
 
     /**
@@ -58,7 +58,7 @@ class FetchDeviceDataLocal extends FetchDeviceData
      */
     protected function getFileModificationTime($filePath)
     {
-
+        return date("Y-m-d h:i:s", filemtime($filePath));
     }
 
     /**

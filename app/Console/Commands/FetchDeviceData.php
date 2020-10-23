@@ -73,6 +73,54 @@ abstract class FetchDeviceData extends Command
     {
         echo("Nice to do nothing... DO NOT USE!\n");
     }
+    
+    /**
+     * A PHP function that will calculate the median value
+     * of an array
+     * 
+     * @param array $arr The array that you want to get the median value of.
+     * @return boolean|float|int
+     * @throws Exception If it's not an array
+     */
+    private function getMedian($arr)
+    {
+        //Make sure it's an array.
+        if (!is_array($arr))
+        {
+            throw new Exception('$arr must be an array!');
+        }
+
+        //If it's an empty array, return FALSE.
+        if (empty($arr))
+        {
+            return false;
+        }
+
+        //Count how many elements are in the array.
+        $num = count($arr);
+
+        //Determine the middle value of the array.
+        $middleVal = floor(($num - 1) / 2);
+
+        //If the size of the array is an odd number,
+        //then the middle value is the median.
+        if($num % 2)
+        { 
+            return $arr[$middleVal];
+        } 
+        //If the size of the array is an even number, then we
+        //have to get the two middle values and get their
+        //average
+        else 
+        {
+            //The $middleVal var will be the low
+            //end of the middle
+            $lowMid = $arr[$middleVal];
+            $highMid = $arr[$middleVal + 1];
+            //Return the average of the low and high.
+            return (($lowMid + $highMid) / 2);
+        }
+    }
 
     /**
      * Connect to folder
@@ -105,9 +153,12 @@ abstract class FetchDeviceData extends Command
     protected function fetch()
     {
         // Connect to the remote file system
-        $this->connect();
+        if ($this->connect() == FALSE)
+        {
+            return;
+        }
 
-        // Get all path of all Geomon Base Stations in /data/Geomon/
+        // Get all paths of all Geomon Base Stations in /data/Geomon/
         $baseStationPaths = $this->listDir("/data/Geomon/");
         
         // Find all the base stations present in the actual the folder "/data/Geomon/"
@@ -131,10 +182,9 @@ abstract class FetchDeviceData extends Command
         // For each base station
         foreach ($baseStations as $baseStation)
         {
-            echo("Processing Base Station $baseStation\n");
-
             // Get the base station id
             $baseStation_id = intval(substr($baseStation, -4));
+            echo("Processing Base Station $baseStation_id\n");
 
             // Get all the measure paths concerning this base station
             $paths = $this->listDir($baseStation);
@@ -174,21 +224,28 @@ abstract class FetchDeviceData extends Command
             // For all not processed paths
             foreach($measurePaths as $measurePath)
             {
+                echo("Processing measure : $measurePath\n");
                 $measureFiles = $this->listDir($measurePath);
 
                 // Find the rxInfo file
                 $rxInfoPath = null;
+                unset($posPaths);
+                $posPaths = array();
                 foreach ($measureFiles as $measureFile)
                 {
                     if (strstr($measureFile, "rxInfo") != FALSE)
                     {
                         $rxInfoPath = $measureFile;
                     }
+                    else if (strstr($measureFile, ".pos") != FALSE)
+                    {
+                        $posPaths[] = $measureFile;
+                    }
                 }
 
                 if ($rxInfoPath == null)
                 {
-                    echo("No rxInfo file found for $measurePath.\n");
+                    echo("No rxInfo file found -> Operation aborted.\n");
                     continue;
                 }
 
@@ -197,11 +254,13 @@ abstract class FetchDeviceData extends Command
 
                 // Parse the rxInfo file
                 $i = 0;
+                unset($rxInfo);
+                $rxInfo = array();
                 foreach ($myFileRows as $myFileRow)
                 {
                     preg_match_all("#(([\w \.]+\.)|([\w \.]+\b)) +: ([\w\.\-:]+)#", $myFileRow, $matches);
 
-                    // Check that something mathced the regular expression at this line in the 
+                    // Check that something matched the regular expression at this line in the 
                     if(count($matches[0]) > 0)
                     {
                         // If yes, save the key...
@@ -220,17 +279,32 @@ abstract class FetchDeviceData extends Command
                     }
                 }
 
+                // Check that the rxInfo is not null
+                if (count($rxInfo) == 0)
+                {
+                    echo("rxInfo file corrupted -> Operation aborted\n");
+                    continue;
+                }
+
+                // Check the rxInfo file version
+                // if (strcmp($rxInfo[0][1], "V2.1") != 0)
+                // {
+                //     echo("rxInfo file version not supported -> Operation aborted\n");
+                //     continue;
+                // }
+
                 // Check file existency in the database Save the rxInfo file in the database
                 $rxInfoExplodedPath = explode("/", $rxInfoPath);
                 $path = $rxInfoExplodedPath[0] . "/" . $rxInfoExplodedPath[1] . "/" . 
                         $rxInfoExplodedPath[2] . "/" . $rxInfoExplodedPath[3] . "/" .
                         $rxInfoExplodedPath[4];
+                $name = end($rxInfoExplodedPath);
 
-                $file = File::where('path', $path)->first();
+                $file = File::where([['path', $path], ['name', $name], ['type', 'rxInfo']])->first();
                 if ($file == null)
                 {
                     $file = new File;
-                    $file->name = end($rxInfoExplodedPath);
+                    $file->name = $name;
                     $file->type = "rxInfo";
                     $file->version = $rxInfo[0][1];
                     $file->path = $path;
@@ -239,9 +313,8 @@ abstract class FetchDeviceData extends Command
                                                   $rxInfoExplodedPath[4][2] . $rxInfoExplodedPath[4][3] . "-" .
                                                   $rxInfoExplodedPath[4][4] . $rxInfoExplodedPath[4][5] . " " .
                                                   $rxInfoExplodedPath[4][7] . $rxInfoExplodedPath[4][8] . ":00:00";
+                    $file->save();
                 }
-                
-                $file->save();
 
                 // Process the rxInfo and set the intial conditions
                 $state = $this->cStateFillBaseStation;
@@ -250,7 +323,6 @@ abstract class FetchDeviceData extends Command
                 $deviceRover = null;
                 $measureDevice = null;
                 $measureRover = null;
-
                 foreach($rxInfo as $item)
                 {
                     $key = $item[0];
@@ -383,24 +455,155 @@ abstract class FetchDeviceData extends Command
                     }
                 }
 
-                $deviceRover->device_base_station_id = $deviceBaseStation->id;
-                $deviceRover->save();
+                if ($state == $this->cStateFillBaseStation)
+                {
+                    $deviceBaseStation->user_id = NULL;
+                    $deviceBaseStation->save();
 
-                $device->table_id = $deviceRover->id;
-                $device->save();
+                    $device->table_id = $deviceBaseStation->id;
+                    $device->save();
 
-                $measureRover->device_rover_id = $deviceRover->id;
-                $measureRover->file_id = $file->id;
-                $measureRover->save();
+                    $measureDevice->device_id = $device->id;
+                    $measureDevice->file_id = $file->id;
+                    $measureDevice->save();
+                }
+                else if ($state == $this->cStateFillRover)
+                {
+                    $deviceRover->device_base_station_id = $deviceBaseStation->id;
+                    $deviceRover->save();
+
+                    $device->table_id = $deviceRover->id;
+                    $device->save();
+
+                    $measureRover->device_rover_id = $deviceRover->id;
+                    $measureRover->file_id = $file->id;
+                    $measureRover->save();
+                }
+
+                // Process the .pos files if .pos files are existing in the current measure folder path
+                if (count($posPaths) == 0)
+                {
+                    echo("No .pos file found in $measurePath -> Operation aborted\n");
+                    continue;
+                }
+
+                foreach($posPaths as $posPath)
+                {
+                    // Download the .pos file
+                    $myFileRows = $this->getFile($posPath);
+
+                    //Remove all header lines (useless)
+                    foreach($myFileRows as $y => $myFileRow)
+                    {
+                        if ($myFileRow[0] == "%")
+                        {
+                            unset($myFileRows[$y]);
+                        }
+                    }
+
+                    $myFileRows = array_values($myFileRows);
+                    
+                    // Check that there are position data in this file
+                    if (count($myFileRows) == 0)
+                    {
+                        echo("No position data in $posPath -> Operation aborted\n");
+                        continue;
+                    }
+
+                    $i = 0;
+                    unset($positions);
+                    $positions = array();
+                    foreach($myFileRows as $myFileRow)
+                    {
+                        preg_match_all("([:\/\-\d.]+)", $myFileRow, $matches);
+                        $matches = $matches[0];
+
+                        // Check that Q = 1
+                        if ($matches[5] == 1)
+                        {
+                            $positions['latitude'][$i]  = $matches[2];
+                            $positions['longitude'][$i] = $matches[3];
+                            $positions['height'][$i]    = $matches[4];
+                            $positions['Q'][$i]         = $matches[5];
+                            $positions['ns'][$i]        = $matches[6];
+                            $positions['sdn'][$i]       = $matches[7];
+                            $positions['sde'][$i]       = $matches[8];
+                            $positions['sdu'][$i]       = $matches[9];
+                            $positions['sdne'][$i]      = $matches[10];
+                            $positions['sdeu'][$i]      = $matches[11];
+                            $positions['sdun'][$i]      = $matches[12];
+                            $i++;
+                        }
+                    }
+
+                    // Check that there are positions with Q = 1, then...
+                    if ($i == 0)
+                    {
+                        echo("No position with Q = 1 in file $posPath -> Operation aborted\n");
+                        continue;
+                    }
+
+                    // Now it worth to save the file
+                    // Check if the .pos file is already existing in the database...
+                    $posExplodedPath = explode("/", $posPath);
+                    $path = $posExplodedPath[0] . "/" . $posExplodedPath[1] . "/" . 
+                            $posExplodedPath[2] . "/" . $posExplodedPath[3] . "/" .
+                            $posExplodedPath[4];
+                    $name = end($posExplodedPath);
+
+                    $file = File::where([['path', $path], ['name', $name], ['type', 'pos']])->first();
+                    if ($file == null)
+                    {
+                        $file = new File;
+                        $file->name = $name;
+                        $file->type = "pos";
+                        $file->version = "1";
+                        $file->path = $path;
+                        $file->upload_time = $this->getFileModificationTime($posPath);
+                        $file->creation_time = "20" . $posExplodedPath[4][0] . $posExplodedPath[4][1] . "-" .
+                                                      $posExplodedPath[4][2] . $posExplodedPath[4][3] . "-" .
+                                                      $posExplodedPath[4][4] . $posExplodedPath[4][5] . " " .
+                                                      $posExplodedPath[4][7] . $posExplodedPath[4][8] . ":00:00";
+                        $file->save();
+                    }
+
+                    // Check position existency in the database or save it
+                    $deviceRoverSystemId = substr($name, 0, -4);
+                    $deviceRoverSystemId = intval(substr($deviceRoverSystemId, 29));
+                    
+                    $deviceRover = DeviceRover::whereHas('device', function ($query) use ($deviceRoverSystemId) 
+                                                {
+                                                    return $query->where('system_id', $deviceRoverSystemId);
+                                                })
+                                                ->where('device_base_station_id', $deviceBaseStation->id)
+                                                ->first();
+
+                    
+
+                    $position = Position::where([['device_rover_id', $deviceRover->id], ['file_id', $file->id]])->first();
+                    if ($position == null)
+                    {
+                        $position = new Position;
+                        $position->device_rover_id = $deviceRover->id;
+                        $position->file_id = $file->id;
+                        $position->height = $this->getMedian($positions['height']);
+                        $position->latitude = $this->getMedian($positions['latitude']);
+                        $position->longitude = $this->getMedian($positions['longitude']);
+                        $position->nbr_of_samples = count($myFileRows);
+                        $position->nbr_of_samples_where_q_equal_1 = count($positions['Q']);
+                        $position->nbr_of_satellites = ceil(array_sum($positions['ns']) / count($positions['ns']));
+                        $position->save();
+                    }
+                }
 
                 echo("Measure path processed: $measurePath\n");
             }
 
-            echo("Base station $baseStation processed\n");
+            echo("Base station $baseStation_id processed\n");
         }
     
         // Close the connection with the remote file system
-        $this->disconnect();
-        return;
+        // $this->disconnect();
+        // return;
     }
 }

@@ -50,7 +50,7 @@ class FetchDeviceDataFtp extends FetchDeviceData
         {
             echo("Unable to connect to the FTP server!\n");
             ftp_close($this->ftp);
-            return;
+            return FALSE;
         }
 
         // Login to the server
@@ -58,11 +58,18 @@ class FetchDeviceDataFtp extends FetchDeviceData
         {
             echo("Unable to log to the FTP server as $this->ftpUser. Wrong username or password.\n");
             ftp_close($this->ftp);
-            return;
+            return FALSE;
         }
 
         // Switch to passive mode
-        ftp_pasv($this->ftp, true) or die("Cannot switch to passive mode");
+        if (ftp_pasv($this->ftp, true) == FALSE)
+        {
+            echo("Unable to switch the connection to passive mode.\n");
+            ftp_close($this->ftp);
+            return FALSE;
+        }
+
+        return TRUE;
     }
 
     /**

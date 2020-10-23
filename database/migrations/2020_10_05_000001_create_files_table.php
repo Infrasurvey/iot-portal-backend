@@ -17,7 +17,7 @@ class CreateFilesTable extends Migration
             $table->id();
             $table->string('name');
             $table->string('type');
-            $table->string('version');
+            $table->string('version')->nullable();
             $table->string('path');
             $table->timestamp('creation_time', 0)->nullable();
             $table->timestamp('upload_time', 0)->nullable();
