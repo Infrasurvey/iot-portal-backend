@@ -69,6 +69,7 @@ class FetchDeviceDataFtp extends FetchDeviceData
             return FALSE;
         }
 
+        ftp_set_option($this->ftp, FTP_USEPASVADDRESS, true);
         return TRUE;
     }
 

@@ -1,12 +1,13 @@
 <?php
 
 namespace App\Console\Commands;
-
 use Illuminate\Console\Command;
-use App\Models\File;
+
+use App\Models\ConfigurationBaseStation;
 use App\Models\Device;
 use App\Models\DeviceBaseStation;
 use App\Models\DeviceRover;
+use App\Models\File;
 use App\Models\MeasureDevice;
 use App\Models\MeasureRover;
 use App\Models\Position;
@@ -49,6 +50,20 @@ abstract class FetchDeviceData extends Command
         "AccX" => "raw_acceleration_x",
         "AccY" => "raw_acceleration_y",
         "AccZ" => "raw_acceleration_z",
+    );
+
+    var $cMyConfigurationKeys = array(
+        "CONTINUOUS_MODE" => "continuous_mode",
+        "RESET" => "reset",
+        "WAKEUP_PERIOD_IN_MINUTES" => "wakeup_period_in_minutes",
+        "SESSION_START_TIME" => "session_start_time",
+        "SESSION_PERIOD_IN_WAKEUP_PERIOD" => "session_period_in_wakeup_period",
+        "SESSION_DURATION_IN_MINUTES" => "session_duration_in_minutes",
+        "NON_CONTINUOUS_STORE_BINR_TO_FTP" => "non_continuous_store_binr_to_ftp",
+        "GPS_MODULE" => "reference_gps_module",
+        "LATITUDE" => "reference_latitude",
+        "LONGITUDE" => "reference_longitude",
+        "ALTITUDE" => "reference_altitude"
     );
 
     var $cStateFillRover         = 0;
@@ -189,6 +204,125 @@ abstract class FetchDeviceData extends Command
             // Get all the measure paths concerning this base station
             $paths = $this->listDir($baseStation);
 
+            //     ___           __ _                    _   _                 __      _      _ 
+            //    / __|___ _ _  / _(_)__ _ _  _ _ _ __ _| |_(_)___ _ _  ___  __\ \    (_)_ _ (_)
+            //   | (__/ _ \ ' \|  _| / _` | || | '_/ _` |  _| / _ \ ' \(_-< |___> >  _| | ' \| |
+            //    \___\___/_||_|_| |_\__, |\_,_|_| \__,_|\__|_\___/_||_/__/    /_/  (_)_|_||_|_|
+            //                       |___/                                                      
+
+            unset($iniPaths);
+            $iniPaths = array();
+            foreach($paths as $path)
+            {
+                if (strstr($path, ".ini") != FALSE)
+                {
+                    $iniPaths[] = $path;
+                }
+            }
+
+            // Get the latest configuration fetching date
+            if (($device = Device::where([['system_id', $baseStation_id],['table_type', 'device_base_stations']])->first()) != null)
+            {
+                if (($latestConfiguration = ConfigurationBaseStation::where('device_base_station_id', $device->table_id)->latest('file_id')->first()) != null)
+                {
+                    if (($lastfile = File::find($latestConfiguration->file_id)) != null)
+                    {
+                        foreach($iniPaths as $y => $iniPath)
+                        {
+                            $iniExplodedPath = explode("/", $iniPath);
+                            $path = $iniExplodedPath[0] . "/" . $iniExplodedPath[1] . "/" . $iniExplodedPath[2] . "/" . $iniExplodedPath[3];
+                            if ($path <= $lastfile->path)
+                            {
+                                unset($iniPaths[$y]);
+                            }
+                        }
+        
+                        $iniPaths = array_values($iniPaths);
+                    }
+                }
+            }
+
+            // Save the remaining configuration paths that were still not fetched
+            foreach($iniPaths as $iniPath)
+            {
+                // Check file existency in the database Save the rxInfo file in the database
+                $iniExplodedPath = explode("/", $iniPath);
+                $path = $iniExplodedPath[0] . "/" . $iniExplodedPath[1] . "/" . $iniExplodedPath[2] . "/" . $iniExplodedPath[3];
+                $name = end($iniExplodedPath);
+
+                $file = File::where([['path', $path], ['name', $name], ['type', 'ini']])->first();
+                if ($file == null)
+                {
+                    $file = new File;
+                    $file->name = $name;
+                    $file->type = "ini";
+                    $file->version = 1;
+                    $file->path = $path;
+                    $file->upload_time = $this->getFileModificationTime($iniPath);
+                    if ($name[0] >= '0' || $name[0] <= '9')
+                    {
+                        $file->creation_time = "20" . $name[0]  . $name[1]  . "-" . $name[2]  . $name[3]  . "-" .
+                                                      $name[4]  . $name[5]  . " " . $name[7]  . $name[8]  . ":" .
+                                                      $name[9]  . $name[10] . ":" . $name[11] . $name[12];
+                    }
+                    
+                    $file->save();
+                }
+
+                // Download the configuration file
+                $myFileRows = $this->getFile($iniPath);
+
+                // Parse the configuration file
+                unset($configurationFields);
+                $configurationFields = array();
+                foreach ($myFileRows as $myFileRow)
+                {
+                    preg_match_all("#([A-Z_]+)=([0-9:.-]+)#", $myFileRow, $matches);
+
+                    // Check that something matched the regular expression at this line in the 
+                    if ((count($matches[0]) > 0) && (array_key_exists($matches[1][0], $this->cMyConfigurationKeys)))
+                    {
+                        // If yes, save the key and its the corresponding value
+                        $configurationFields[$matches[1][0]] = $matches[count($matches) - 1][0];
+                    }
+                }
+
+                if (count($configurationFields) == 0)
+                {
+                    echo("No data recognized in the configuration file $name -> Operation aborted\n");
+                    continue;
+                }
+
+                if ($device == null)
+                {
+                    $deviceBaseStation = new DeviceBaseStation;
+                    $deviceBaseStation->save();
+
+                    $device = new Device;
+                    $device->system_id = $baseStation_id;
+                    $device->table_id = $deviceBaseStation->id;
+                    $device->table_type = "device_base_stations";
+                    $device->save();
+                }
+
+                $configurationBaseStation = new ConfigurationBaseStation;
+                $configurationBaseStation->device_base_station_id = $device->table_id;
+                $configurationBaseStation->file_id = $file->id;
+                foreach($configurationFields as $key => $value)
+                {
+                    $configurationBaseStation[$this->cMyConfigurationKeys[$key]] = $value;
+                }
+
+                //dd([$configurationBaseStation, $configurationFields, $myFileRows]);
+                $configurationBaseStation->save();
+            }
+
+            //    ___                 ___ _        _   _                 __            ___       __     
+            //   | _ ) __ _ ___ ___  / __| |_ __ _| |_(_)___ _ _  ___  __\ \   _ ___ _|_ _|_ _  / _|___ 
+            //   | _ \/ _` (_-</ -_) \__ \  _/ _` |  _| / _ \ ' \(_-< |___> > | '_\ \ /| || ' \|  _/ _ \
+            //   |___/\__,_/__/\___| |___/\__\__,_|\__|_\___/_||_/__/    /_/  |_| /_\_\___|_||_|_| \___/
+            //                                                                                          
+
             // Keep only the folders (remvove other suspicious folder or files)
             $measurePathTemplate = "/data/Geomon/GM_BASE_XXXX/YYMMDD_HH";
             unset($measurePaths);
@@ -219,6 +353,12 @@ abstract class FetchDeviceData extends Command
                         $measurePaths = array_values($measurePaths);
                     }
                 }
+            }
+
+            if (count($measurePaths) == 0)
+            {
+                echo("No new information to synchronize for base station $baseStation_id -> Operation aborted\n");
+                continue;
             }
 
             // For all not processed paths
@@ -285,13 +425,6 @@ abstract class FetchDeviceData extends Command
                     echo("rxInfo file corrupted -> Operation aborted\n");
                     continue;
                 }
-
-                // Check the rxInfo file version
-                // if (strcmp($rxInfo[0][1], "V2.1") != 0)
-                // {
-                //     echo("rxInfo file version not supported -> Operation aborted\n");
-                //     continue;
-                // }
 
                 // Check file existency in the database Save the rxInfo file in the database
                 $rxInfoExplodedPath = explode("/", $rxInfoPath);
@@ -480,6 +613,12 @@ abstract class FetchDeviceData extends Command
                     $measureRover->save();
                 }
 
+                //    ___                   ___        _ _   _                 __                   
+                //   | _ \_____ _____ _ _  | _ \___ __(_) |_(_)___ _ _  ___  __\ \     _ __  ___ ___
+                //   |   / _ \ V / -_) '_| |  _/ _ (_-< |  _| / _ \ ' \(_-< |___> >  _| '_ \/ _ (_-<
+                //   |_|_\___/\_/\___|_|   |_| \___/__/_|\__|_\___/_||_/__/    /_/  (_) .__/\___/__/
+                //                                                                    |_|           
+
                 // Process the .pos files if .pos files are existing in the current measure folder path
                 if (count($posPaths) == 0)
                 {
@@ -603,7 +742,7 @@ abstract class FetchDeviceData extends Command
         }
     
         // Close the connection with the remote file system
-        // $this->disconnect();
-        // return;
+        $this->disconnect();
+        return;
     }
 }

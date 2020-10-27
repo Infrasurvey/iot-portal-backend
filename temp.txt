@@ -1,25 +1,25 @@
-GEOMON rxInfo : V2.1
-
-BASE NAME     : GM_BASE_0033
-MCU_FIRMWARE  : 0x19
-BBB_MAC       : 0x38D2694C4215
-BBB_VERSION   : GM_BASE_STATION_BBB:1.72
-BBB_MD5       : ca73d95ee95fc2e14cab2266626e9f87  /home/ubuntu/GM_BASE_STATION_BBB
-RNX2RTKP_MD5  : e2b03f00274fcdc259c7d57ee3cf3d96  /home/ubuntu/bin/rnx2rtkp
-CONVBIN_MD5   : 21674412c75139ca3047e1a5a8170d15  /home/ubuntu/bin/convbin
-SD avail.     : 0[MB]
-VBat          : 12.9[V]
-
-GPS_ID    : 0
-UNIQUE_ID : 0x0000
-FIRMWARE  : 0x19
-VBat      : 12.6[V]
-RSSI      : -67[dBm]
-AccX      : 26
-AccY      : -1241
-AccZ      : -46
-CoordX    : 4360810.979534[m]
-CoordY    : 530662.999714[m]
-CoordZ    : 4609988.600036[m]
-SD avail. : 0[MB]
-
+% program   : RTKLIB ver.2.4.3
+% inp file  : /home/ubuntu/GM_BS_TEMP/rnx2rtkp/201027_141439_00063_rxNVS_GPS4.obs
+% inp file  : /home/ubuntu/GM_BS_TEMP/rnx2rtkp/ref/obs
+% inp file  : /home/ubuntu/GM_BS_TEMP/rnx2rtkp/ref/nav
+% obs start : 2020/10/27 14:14:20.0 GPST (week2129 224060.0s)
+% obs end   : 2020/10/27 14:14:30.0 GPST (week2129 224070.0s)
+% pos mode  : static
+% freqs     : L1
+% solution  : forward
+% elev mask : 20.0 deg
+% dynamics  : off
+% tidecorr  : off
+% ionos opt : off
+% tropo opt : off
+% ephemeris : broadcast
+% navi sys  : gps glonass
+% amb res   : continuous
+% amb glo   : on
+% val thres : 3.0
+% antenna1  :                       ( 0.0000  0.0000  0.0000)
+% antenna2  :                       ( 0.0000  0.0000  0.0000)
+% ref pos   : 49.564093700   3.618492900  176.7300
+%
+% (lat/lon/height=WGS84/ellipsoidal,Q=1:fix,2:float,3:sbas,4:dgps,5:single,6:ppp,ns=# of satellites)
+%  GPST                  latitude(deg) longitude(deg)  height(m)   Q  ns   sdn(m)   sde(m)   sdu(m)  sdne(m)  sdeu(m)  sdun(m) age(s)  ratio
