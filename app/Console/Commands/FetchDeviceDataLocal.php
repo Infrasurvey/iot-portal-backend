@@ -34,7 +34,7 @@ class FetchDeviceDataLocal extends FetchDeviceData
      */
     public function connect()
     {
-        
+        return true;
     }
 
     /**
@@ -42,7 +42,21 @@ class FetchDeviceDataLocal extends FetchDeviceData
      */
     protected function listDir($dirPath)
     {
-        return scandir($filePath, SCANDIR_SORT_ASCENDING);
+        $fullPath = "/srv/ImportGeomon/" . $dirPath;
+        $paths = scandir($fullPath, SCANDIR_SORT_ASCENDING);
+        if ($dirPath == "")
+        {
+            return $paths;
+        }
+        else
+        {
+            foreach($paths as $i => $path)
+            {
+                $paths[$i] = $dirPath . "/" . $path;
+            }
+    
+            return $paths;
+        }
     }
 
     /**
@@ -50,6 +64,7 @@ class FetchDeviceDataLocal extends FetchDeviceData
      */
     protected function getFile($filePath)
     {
+        $filePath = "/srv/ImportGeomon/" . $filePath;
         return file($filePath);
     }
 
@@ -58,6 +73,7 @@ class FetchDeviceDataLocal extends FetchDeviceData
      */
     protected function getFileModificationTime($filePath)
     {
+        $filePath = "/srv/ImportGeomon/" . $filePath;
         return date("Y-m-d h:i:s", filemtime($filePath));
     }
 

@@ -16,13 +16,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\DeviceBaseStationController;
+use App\Http\Controllers\DeviceRoverController;
 
 Route::get('device/all', [DeviceController::class, 'getDevices']);
 Route::get('device/{id}', [DeviceController::class, 'getDevice']);
-Route::get('device/basestation/all', [DeviceController::class, 'getDeviceBaseStations']);
-Route::get('device/basestation/{id}', [DeviceController::class, 'getDeviceBaseStation']);
-Route::get('device/rover/all', [DeviceController::class, 'getDeviceRovers']);
-Route::get('device/rover/{id}', [DeviceController::class, 'getDeviceRover']);
+
+Route::get('device/basestation/all', [DeviceBaseStationController::class, 'getDeviceBaseStations']);
+Route::get('device/basestation/{id}', [DeviceBaseStationController::class, 'getDeviceBaseStation']);
+
+Route::get('device/rover/all', [DeviceRoverController::class, 'getDeviceRovers']);
+Route::get('device/rover/{id}', [DeviceRoverController::class, 'getDeviceRover']);
 
 Route::middleware('auth:api')->get('/user', function (Request $request)
 {

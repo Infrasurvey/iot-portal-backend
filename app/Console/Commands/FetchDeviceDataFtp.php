@@ -78,8 +78,16 @@ class FetchDeviceDataFtp extends FetchDeviceData
      */
     protected function listDir($dirPath)
     {
+        $dirPath = "/data/Geomon/" . $dirPath;
         $paths = ftp_nlist($this->ftp, $dirPath);
         sort($paths);
+
+        // Remove "/data/Geomon/" of each path
+        foreach($paths as $key => $path)
+        {
+            $paths[$key] = substr($path, strlen("/data/Geomon/"));
+        }
+
         return $paths;
     }
 
@@ -88,6 +96,7 @@ class FetchDeviceDataFtp extends FetchDeviceData
      */
     protected function getFile($filePath)
     {
+        $filePath = "/data/Geomon/" . $filePath;
         $file = fopen("temp.txt", "w");
         if (ftp_fget($this->ftp, $file, $filePath, FTP_ASCII) == FALSE)
         {
@@ -107,6 +116,7 @@ class FetchDeviceDataFtp extends FetchDeviceData
      */
     protected function getFileModificationTime($filePath)
     {
+        $filePath = "/data/Geomon/" . $filePath;
         return date("Y-m-d h:i:s", ftp_mdtm($this->ftp, $filePath));
     }
 

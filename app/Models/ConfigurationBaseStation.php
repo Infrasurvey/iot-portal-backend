@@ -8,4 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class ConfigurationBaseStation extends Model
 {
     use HasFactory;
+
+    public function file()
+    {
+        return $this->hasOne('App\Models\File');
+    }
 }

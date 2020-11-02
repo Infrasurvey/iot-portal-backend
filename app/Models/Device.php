@@ -8,9 +8,4 @@ use Illuminate\Database\Eloquent\Model;
 class Device extends Model
 {
     use HasFactory;
-
-    /*public function is_device()
-    {
-        return $this->morphTo('devices', 'table_typeaa', 'table_idaa');
-    }*/
 }

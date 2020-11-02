@@ -14,6 +14,6 @@ class DeviceBaseStationController extends Controller
 
     function getDeviceBaseStation($id)
     {
-        return DeviceBaseStation::find($id)->rovers;
+        return DeviceBaseStation::find($id);
     }
 }

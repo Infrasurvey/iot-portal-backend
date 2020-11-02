@@ -22,4 +22,14 @@ class DeviceBaseStation extends Model
     {
         return $this->morphOne('App\Models\Device', 'is_device');
     }
+
+    public function rovers()
+    {
+        
+    }
+
+    public function configurations()
+    {
+        return $this->hasMany('App\Models\ConfigurationBaseStation');
+    }
 }

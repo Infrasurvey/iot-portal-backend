@@ -173,14 +173,15 @@ abstract class FetchDeviceData extends Command
             return;
         }
 
-        // Get all paths of all Geomon Base Stations in /data/Geomon/
-        $baseStationPaths = $this->listDir("/data/Geomon/");
-        
-        // Find all the base stations present in the actual the folder "/data/Geomon/"
+        // Get all paths of all Geomon Base Stations in root folder.
+        $baseStationPaths = $this->listDir("");
+
+        // Find all the base stations present in the root the folder.
+        $baseStations = array();
         for ($i = 0; $i < count($baseStationPaths); $i++)
         {
             // Check if the current tested path
-            $baseStationPath = sprintf("/data/Geomon/GM_BASE_%04d", $i);
+            $baseStationPath = sprintf("GM_BASE_%04d", $i);
 
             $j = $i;
             while (($j < count($baseStationPaths)) && (strcmp($baseStationPaths[$j], $baseStationPath) != 0))
@@ -229,9 +230,7 @@ abstract class FetchDeviceData extends Command
                     {
                         foreach($iniPaths as $y => $iniPath)
                         {
-                            $iniExplodedPath = explode("/", $iniPath);
-                            $path = $iniExplodedPath[0] . "/" . $iniExplodedPath[1] . "/" . $iniExplodedPath[2] . "/" . $iniExplodedPath[3];
-                            if ($path <= $lastfile->path)
+                            if ($iniPath <= $lastfile->path)
                             {
                                 unset($iniPaths[$y]);
                             }
@@ -246,20 +245,17 @@ abstract class FetchDeviceData extends Command
             foreach($iniPaths as $iniPath)
             {
                 // Check file existency in the database Save the rxInfo file in the database
-                $iniExplodedPath = explode("/", $iniPath);
-                $path = $iniExplodedPath[0] . "/" . $iniExplodedPath[1] . "/" . $iniExplodedPath[2] . "/" . $iniExplodedPath[3];
-                $name = end($iniExplodedPath);
-
-                $file = File::where([['path', $path], ['name', $name], ['type', 'ini']])->first();
+                $file = File::where('path', $iniPath)->first();
                 if ($file == null)
                 {
                     $file = new File;
-                    $file->name = $name;
                     $file->type = "ini";
                     $file->version = 1;
-                    $file->path = $path;
+                    $file->path = $iniPath;
                     $file->upload_time = $this->getFileModificationTime($iniPath);
-                    if ($name[0] >= '0' || $name[0] <= '9')
+                    $name = explode("/", $iniPath);
+                    $name = end($name);
+                    if (($name[0] >= '0') && ($name[0] <= '9'))
                     {
                         $file->creation_time = "20" . $name[0]  . $name[1]  . "-" . $name[2]  . $name[3]  . "-" .
                                                       $name[4]  . $name[5]  . " " . $name[7]  . $name[8]  . ":" .
@@ -289,7 +285,7 @@ abstract class FetchDeviceData extends Command
 
                 if (count($configurationFields) == 0)
                 {
-                    echo("No data recognized in the configuration file $name -> Operation aborted\n");
+                    echo("No data recognized in the configuration file $iniPath -> Operation aborted\n");
                     continue;
                 }
 
@@ -313,7 +309,6 @@ abstract class FetchDeviceData extends Command
                     $configurationBaseStation[$this->cMyConfigurationKeys[$key]] = $value;
                 }
 
-                //dd([$configurationBaseStation, $configurationFields, $myFileRows]);
                 $configurationBaseStation->save();
             }
 
@@ -324,7 +319,7 @@ abstract class FetchDeviceData extends Command
             //                                                                                          
 
             // Keep only the folders (remvove other suspicious folder or files)
-            $measurePathTemplate = "/data/Geomon/GM_BASE_XXXX/YYMMDD_HH";
+            $measurePathTemplate = "GM_BASE_XXXX/YYMMDD_HH";
             unset($measurePaths);
             $measurePaths = array();
             foreach ($paths as $path)
@@ -427,25 +422,22 @@ abstract class FetchDeviceData extends Command
                 }
 
                 // Check file existency in the database Save the rxInfo file in the database
-                $rxInfoExplodedPath = explode("/", $rxInfoPath);
-                $path = $rxInfoExplodedPath[0] . "/" . $rxInfoExplodedPath[1] . "/" . 
-                        $rxInfoExplodedPath[2] . "/" . $rxInfoExplodedPath[3] . "/" .
-                        $rxInfoExplodedPath[4];
-                $name = end($rxInfoExplodedPath);
-
-                $file = File::where([['path', $path], ['name', $name], ['type', 'rxInfo']])->first();
+                $file = File::where('path', $rxInfoPath)->first();
                 if ($file == null)
                 {
                     $file = new File;
-                    $file->name = $name;
                     $file->type = "rxInfo";
                     $file->version = $rxInfo[0][1];
-                    $file->path = $path;
+                    $file->path = $rxInfoPath;
                     $file->upload_time = $this->getFileModificationTime($rxInfoPath);
-                    $file->creation_time = "20" . $rxInfoExplodedPath[4][0] . $rxInfoExplodedPath[4][1] . "-" .
-                                                  $rxInfoExplodedPath[4][2] . $rxInfoExplodedPath[4][3] . "-" .
-                                                  $rxInfoExplodedPath[4][4] . $rxInfoExplodedPath[4][5] . " " .
-                                                  $rxInfoExplodedPath[4][7] . $rxInfoExplodedPath[4][8] . ":00:00";
+                    $name = explode("/", $rxInfoPath);
+                    $name = end($name);
+                    $file->creation_time = "20" . $name[0]  . $name[1]  . "-" .
+                                                  $name[2]  . $name[3]  . "-" .
+                                                  $name[4]  . $name[5]  . " " .
+                                                  $name[7]  . $name[8]  . ":" .
+                                                  $name[9]  . $name[10] . ":" .
+                                                  $name[11] . $name[12];
                     $file->save();
                 }
 
@@ -684,25 +676,20 @@ abstract class FetchDeviceData extends Command
 
                     // Now it worth to save the file
                     // Check if the .pos file is already existing in the database...
-                    $posExplodedPath = explode("/", $posPath);
-                    $path = $posExplodedPath[0] . "/" . $posExplodedPath[1] . "/" . 
-                            $posExplodedPath[2] . "/" . $posExplodedPath[3] . "/" .
-                            $posExplodedPath[4];
-                    $name = end($posExplodedPath);
-
-                    $file = File::where([['path', $path], ['name', $name], ['type', 'pos']])->first();
+                    $file = File::where('path', $posPath)->first();
                     if ($file == null)
                     {
                         $file = new File;
-                        $file->name = $name;
                         $file->type = "pos";
                         $file->version = "1";
-                        $file->path = $path;
+                        $file->path = $posPath;
                         $file->upload_time = $this->getFileModificationTime($posPath);
-                        $file->creation_time = "20" . $posExplodedPath[4][0] . $posExplodedPath[4][1] . "-" .
-                                                      $posExplodedPath[4][2] . $posExplodedPath[4][3] . "-" .
-                                                      $posExplodedPath[4][4] . $posExplodedPath[4][5] . " " .
-                                                      $posExplodedPath[4][7] . $posExplodedPath[4][8] . ":00:00";
+                        $name = explode("/", $posPath);
+                        $name = end($name);
+                        $file->creation_time = "20" . $name[0] . $name[1] . "-" .
+                                                      $name[2] . $name[3] . "-" .
+                                                      $name[4] . $name[5] . " " .
+                                                      $name[7] . $name[8] . ":00:00";
                         $file->save();
                     }
 
@@ -716,9 +703,7 @@ abstract class FetchDeviceData extends Command
                                                 })
                                                 ->where('device_base_station_id', $deviceBaseStation->id)
                                                 ->first();
-
                     
-
                     $position = Position::where([['device_rover_id', $deviceRover->id], ['file_id', $file->id]])->first();
                     if ($position == null)
                     {
