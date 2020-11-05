@@ -10,26 +10,33 @@ class DeviceBaseStation extends Model
     use HasFactory;
     
     protected $appends = [
-        'DeviceRoverCount'
+        'device_rover_count',
+        'last_battery_voltage'
     ];
+
+    public function device()
+    {
+        return $this->morphOne('App\Models\Device', 'table');
+    }
+
+    public function rovers()
+    {
+        return $this->hasMany('App\Models\DeviceRover');
+    }
+
+    public function configurations()
+    {
+        return $this->hasMany('App\Models\ConfigurationBaseStation');
+    }
 
     public function getDeviceRoverCountAttribute()
     {
         return $this->rovers()->count();
     }
 
-    public function device()
+    public function getLastBatteryVoltageAttribute()
     {
-        return $this->morphOne('App\Models\Device', 'is_device');
-    }
-
-    public function rovers()
-    {
-        
-    }
-
-    public function configurations()
-    {
-        return $this->hasMany('App\Models\ConfigurationBaseStation');
+        //return $this->device->measure_devices->last()->battery_voltage;
+        return $this->device->last_battery_voltage;
     }
 }

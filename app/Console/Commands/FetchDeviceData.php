@@ -468,7 +468,7 @@ abstract class FetchDeviceData extends Command
                             $measureDevice->file_id = $file->id;
                             $measureDevice->save();
 
-                            $device = null;
+                            $device = NULL;
                             $state = $this->cStateFillRover;
                         }
                         else if ($state == $this->cStateFillRover)
@@ -479,11 +479,15 @@ abstract class FetchDeviceData extends Command
                             $device->table_id = $deviceRover->id;
                             $device->save();
 
+                            $measureDevice->device_id = $device->id;
+                            $measureDevice->file_id = $file->id;
+                            $measureDevice->save();
+
                             $measureRover->device_rover_id = $deviceRover->id;
                             $measureRover->file_id = $file->id;
                             $measureRover->save();
 
-                            $device = null;
+                            $device = NULL;
                         }
                     }
 
@@ -505,12 +509,6 @@ abstract class FetchDeviceData extends Command
                             {
                                 // Device was already existing
                                 $deviceBaseStation = DeviceBaseStation::find($device->table_id);
-                            }
-
-                            $measureDevice = MeasureDevice::where([['device_id', $device->id], ['file_id', $file->id]])->first();
-                            if ($measureDevice == null)
-                            {
-                                $measureDevice = new MeasureDevice;
                             }
                         }
                         else if ($state == $this->cStateFillRover)
@@ -545,38 +543,34 @@ abstract class FetchDeviceData extends Command
                                 }
                             }
                         }
+
+                        $measureDevice = MeasureDevice::where([['device_id', $device->id], ['file_id', $file->id]])->first();
+                        if ($measureDevice == null)
+                        {
+                            $measureDevice = new MeasureDevice;
+                        }
                     }
 
                     // Fill the object fields
-                    if($state == $this->cStateFillBaseStation)
+                    if (array_key_exists($key, $this->cMyDeviceKeys))
                     {
-                        if (array_key_exists($key, $this->cMyDeviceKeys))
-                        {
-                            $device[$this->cMyDeviceKeys[$key]] = $value;
-                        }
-                        else if (array_key_exists($key, $this->cMyMeasureDeviceKeys))
-                        {
-                            $measureDevice[$this->cMyMeasureDeviceKeys[$key]] = $value;
-                        }
-                        else if (array_key_exists($key, $this->cMyDeviceBaseStationKeys))
-                        {
-                            $deviceBaseStation[$this->cMyDeviceBaseStationKeys[$key]] = $value;
-                        }
+                        $device[$this->cMyDeviceKeys[$key]] = $value;
                     }
-                    else if ($state == $this->cStateFillRover)
+                    else if (array_key_exists($key, $this->cMyMeasureDeviceKeys))
                     {
-                        if (array_key_exists($key, $this->cMyDeviceKeys))
-                        {
-                            $device[$this->cMyDeviceKeys[$key]] = $value;
-                        }
-                        else if (array_key_exists($key, $this->cMyMeasureRoverKeys))
-                        {
-                            $measureRover[$this->cMyMeasureRoverKeys[$key]] = $value;
-                        }
-                        else if (array_key_exists($key, $this->cMyDeviceRoverKeys))
-                        {
-                            $deviceRover[$this->cMyDeviceRoverKeys[$key]] = $value;
-                        }
+                        $measureDevice[$this->cMyMeasureDeviceKeys[$key]] = $value;
+                    }
+                    else if (array_key_exists($key, $this->cMyDeviceBaseStationKeys))
+                    {
+                        $deviceBaseStation[$this->cMyDeviceBaseStationKeys[$key]] = $value;
+                    }
+                    else if (array_key_exists($key, $this->cMyMeasureRoverKeys))
+                    {
+                        $measureRover[$this->cMyMeasureRoverKeys[$key]] = $value;
+                    }
+                    else if (array_key_exists($key, $this->cMyDeviceRoverKeys))
+                    {
+                        $deviceRover[$this->cMyDeviceRoverKeys[$key]] = $value;
                     }
                 }
 

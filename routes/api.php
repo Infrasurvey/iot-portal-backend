@@ -24,6 +24,7 @@ Route::get('device/{id}', [DeviceController::class, 'getDevice']);
 
 Route::get('device/basestation/all', [DeviceBaseStationController::class, 'getDeviceBaseStations']);
 Route::get('device/basestation/{id}', [DeviceBaseStationController::class, 'getDeviceBaseStation']);
+Route::get('device/basestation/{id}/configurations', [DeviceBaseStationController::class, 'getConfigurations']);
 
 Route::get('device/rover/all', [DeviceRoverController::class, 'getDeviceRovers']);
 Route::get('device/rover/{id}', [DeviceRoverController::class, 'getDeviceRover']);

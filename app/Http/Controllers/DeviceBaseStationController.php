@@ -9,11 +9,31 @@ class DeviceBaseStationController extends Controller
 {
     function getDeviceBaseStations()
     {
-        return DeviceBaseStation::get()->append('DeviceRoverCount')->all();
+        return DeviceBaseStation::all();
     }
 
     function getDeviceBaseStation($id)
     {
-        return DeviceBaseStation::find($id);
+        return DeviceBaseStation::whereHas('device', function($query) use ($id)
+        {
+            $query->where('system_id', $id);
+        })->get();
+    }
+
+    function getConfigurations($id)
+    {
+        $baseStation = DeviceBaseStation::whereHas('device', function($query) use ($id)
+        {
+            $query->where('system_id', $id);
+        })->first();
+
+        if ($baseStation == null)
+        {
+            return null;
+        }
+        else
+        {
+            return $baseStation->configurations;
+        }
     }
 }

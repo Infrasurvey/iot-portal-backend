@@ -25,7 +25,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         Relation::morphMap([
-            'device_rovers' => 'App\Models\DeviceRover'
+            'device_rovers' => 'App\Models\DeviceRover',
+            'device_base_stations' => 'App\Models\DeviceBaseStation'
         ]);
     }
 }
