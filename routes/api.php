@@ -18,6 +18,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DeviceBaseStationController;
 use App\Http\Controllers\DeviceRoverController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\OrganizationController;
+
 
 Route::get('device/all', [DeviceController::class, 'getDevices']);
 Route::get('device/{id}', [DeviceController::class, 'getDevice']);
@@ -29,7 +32,5 @@ Route::get('device/basestation/{id}/configurations', [DeviceBaseStationControlle
 Route::get('device/rover/all', [DeviceRoverController::class, 'getDeviceRovers']);
 Route::get('device/rover/{id}', [DeviceRoverController::class, 'getDeviceRover']);
 
-Route::middleware('auth:api')->get('/user', function (Request $request)
-{
-    return $request->user();
-});
+Route::resource('user',[UserController::class]);
+Route::resource('organization',OrganizationController::class);
