@@ -17,15 +17,6 @@ class OrganizationController extends Controller
         return Organization::all();
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -35,8 +26,12 @@ class OrganizationController extends Controller
      */
     public function store(Request $request)
     {
-        //
-    }
+        $organization = Organization::create([
+            'name' => $request->name
+        ]);
+        
+         return new Organization($organization);    
+        }
 
     /**
      * Display the specified resource.
@@ -46,19 +41,10 @@ class OrganizationController extends Controller
      */
     public function show(Organization $organization)
     {
-        //
+        return new Organization($organization);
+
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Organization  $organization
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Organization $organization)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
@@ -69,7 +55,9 @@ class OrganizationController extends Controller
      */
     public function update(Request $request, Organization $organization)
     {
-        //
+        $organization->update($request->only(['name']));
+
+        return new Organization($organization);    
     }
 
     /**
@@ -80,6 +68,8 @@ class OrganizationController extends Controller
      */
     public function destroy(Organization $organization)
     {
-        //
-    }
+        $organization->delete();
+
+        return response()->json(null, 204);   
+     }
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Installation;
+
 
 class InstallationController extends Controller
 {
@@ -13,20 +15,9 @@ class InstallationController extends Controller
      */
     public function index()
     {
- 
+        return Installation::all();
+
     
-    }
- 
- 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
- 
-        
     }
  
  
@@ -54,20 +45,7 @@ class InstallationController extends Controller
  
          
     }
- 
- 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Installation  $installation
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Installation $installation)
-    {
- 
-         
-    }
- 
+
  
     /**
      * Update the specified resource in storage.

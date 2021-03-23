@@ -20,6 +20,8 @@ use App\Http\Controllers\DeviceBaseStationController;
 use App\Http\Controllers\DeviceRoverController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\InstallationController;
+use App\Http\Controllers\GroupController;
 
 
 Route::get('device/all', [DeviceController::class, 'getDevices']);
@@ -32,5 +34,7 @@ Route::get('device/basestation/{id}/configurations', [DeviceBaseStationControlle
 Route::get('device/rover/all', [DeviceRoverController::class, 'getDeviceRovers']);
 Route::get('device/rover/{id}', [DeviceRoverController::class, 'getDeviceRover']);
 
-Route::resource('user',[UserController::class]);
-Route::resource('organization',OrganizationController::class);
+Route::apiResource('user', 'UserController');
+Route::apiResource('organization', 'OrganizationController');
+Route::apiResource('group', 'InstallationController');
+Route::apiResource('installation', 'GroupController');

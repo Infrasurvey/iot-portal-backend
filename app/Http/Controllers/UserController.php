@@ -17,15 +17,6 @@ class UserController extends Controller
         return User::all();
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -35,14 +26,20 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'email_verified_at' => $request->email_verified_at,
-            'password' => $request->password
-        ]);
-        
-         return new User($user);
+        try {
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => $request->password
+            ]);
+            return response()->json($user, 201);; 
+        } catch (\Exception $e) {
+            // Return Error Response
+            return response()->json([
+                'message' => $e
+            ], 500);
+        }
+
     }
 
     /**
@@ -53,19 +50,9 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return new User($user);
+        return $user;
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(User $user)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
@@ -78,7 +65,7 @@ class UserController extends Controller
     {
         $user->update($request->only(['name', 'email','email_verified_at','password']));
 
-        return new User($user);
+        return $user;
     }
 
     /**
