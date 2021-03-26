@@ -22,9 +22,8 @@ class FileFactory extends Factory
     public function definition()
     {
         return [
-            'name' => 'toto',
-            'path' => 'tutu',
-            'ftp_upload_date' => $this->faker->dateTime($max = 'now', $timezone = null)
+            'type' => 'toto',
+            'path' => 'tutu'
         ];
     }
 }

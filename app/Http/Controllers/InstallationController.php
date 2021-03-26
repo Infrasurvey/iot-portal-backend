@@ -29,7 +29,21 @@ class InstallationController extends Controller
      */
     public function store(Request $request)
     {
- 
+        try {
+            $installation = Installation::create([
+                'group_id' => $request->group_id,
+                'name' => $request->name,
+                'image_path' => $request->image_path,
+                'installation_date'=>$request->installation_date,
+                'last_human_intervention'=>$request->last_human_intervention
+            ]);
+            return response()->json($installation, 201);; 
+        } catch (\Exception $e) {
+            // Return Error Response
+            return response()->json([
+                'message' => $e
+            ], 500);
+        }   
          
     }
  
@@ -43,7 +57,7 @@ class InstallationController extends Controller
     public function show(Installation $installation)
     {
  
-         
+         return $installation;
     }
 
  
@@ -56,7 +70,9 @@ class InstallationController extends Controller
      */
     public function update(Request $request, Installation $installation)
     {
- 
+        $installation->update($request->only(['group_id','name','image_path','installation_date','last_human_,intervention']));
+
+        return $installation;  
          
     }
  
@@ -69,7 +85,9 @@ class InstallationController extends Controller
      */
     public function destroy(Installation $installation)
     {
+       $installation->delete();
  
+        return response()->json(null, 204); 
          
     }
 }

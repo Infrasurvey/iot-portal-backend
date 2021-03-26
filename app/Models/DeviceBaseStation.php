@@ -11,7 +11,7 @@ class DeviceBaseStation extends Model
     
     protected $appends = [
         'device_rover_count',
-        'last_battery_voltage'
+        'battery_voltage'
     ];
 
     public function device()
@@ -34,9 +34,9 @@ class DeviceBaseStation extends Model
         return $this->rovers()->count();
     }
 
-    public function getLastBatteryVoltageAttribute()
+    public function getBatteryVoltageAttribute()
     {
         //return $this->device->measure_devices->last()->battery_voltage;
-        return $this->device->last_battery_voltage;
+        return $this->device->battery_voltage;
     }
 }

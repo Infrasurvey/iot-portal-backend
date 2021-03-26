@@ -28,7 +28,18 @@ class GroupController extends Controller
      */
     public function store(Request $request)
     {
- 
+        try {
+            $group = Group::create([ 
+                'organization_id'=>$request->organization_id,
+                'name' => $request->name
+            ]);
+            return response()->json($group, 201);; 
+        } catch (\Exception $e) {
+            // Return Error Response
+            return response()->json([
+                'message' => $e
+            ], 500);
+        }   
          
     }
  
@@ -41,7 +52,7 @@ class GroupController extends Controller
      */
     public function show(Group $group)
     {
- 
+        return $group;
          
     }
  
@@ -55,7 +66,9 @@ class GroupController extends Controller
      */
     public function update(Request $request, Group $group)
     {
- 
+        $group->update($request->only(['organization_id','name']));
+
+        return $group;  
          
     }
  
@@ -68,7 +81,9 @@ class GroupController extends Controller
      */
     public function destroy(Group $group)
     {
+        $group->delete();
  
+        return response()->json(null, 204); 
          
     }
 }

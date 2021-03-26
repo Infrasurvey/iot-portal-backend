@@ -24,8 +24,9 @@ class DeviceRoverFactory extends Factory
     {
         return [
             'device_base_station_id' => DeviceBaseStation::inRandomOrder()->limit(1)->get()[0]->id,
-            'gps_id' => rand(1, 15),
-            'rssi' => rand(-100, -60)
+            'coordinate_x' => rand(1, 15),
+            'coordinate_y' => rand(1, 15),
+            'coordinate_z' => rand(1, 15),
         ];
     }
 }

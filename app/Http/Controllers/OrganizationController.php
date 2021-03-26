@@ -26,12 +26,18 @@ class OrganizationController extends Controller
      */
     public function store(Request $request)
     {
-        $organization = Organization::create([
-            'name' => $request->name
-        ]);
-        
-         return new Organization($organization);    
-        }
+        try {
+            $organization = Organization::create([
+                'name' => $request->name
+            ]);
+            return response()->json($organization, 201);; 
+        } catch (\Exception $e) {
+            // Return Error Response
+            return response()->json([
+                'message' => $e
+            ], 500);
+        }   
+    }
 
     /**
      * Display the specified resource.
@@ -41,7 +47,7 @@ class OrganizationController extends Controller
      */
     public function show(Organization $organization)
     {
-        return new Organization($organization);
+        return $organization;
 
     }
 
@@ -57,7 +63,7 @@ class OrganizationController extends Controller
     {
         $organization->update($request->only(['name']));
 
-        return new Organization($organization);    
+        return $organization;    
     }
 
     /**

@@ -39,10 +39,9 @@ class DeviceFactory extends Factory
         }
         
         return [
-            'file_id' => File::inRandomOrder()->limit(1)->get()[0]->id,
+            'system_id' => File::inRandomOrder()->limit(1)->get()[0]->id,
             'table_type' => $table_name,
             'table_id' => $table_id,
-            'battery_voltage' => $this->faker->randomFloat($nbMaxDecimals = 2, $min = 9, $max = 14),
             'firmware_version' => $this->faker->randomDigit
         ];
     }

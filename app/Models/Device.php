@@ -10,7 +10,7 @@ class Device extends Model
     use HasFactory;
     
     protected $appends = [
-        'last_battery_voltage'
+        'battery_voltage'
     ];
 
     public function measure_devices()
@@ -18,7 +18,7 @@ class Device extends Model
         return $this->hasMany('App\Models\MeasureDevice');
     }
 
-    public function getLastBatteryVoltageAttribute()
+    public function getBatteryVoltageAttribute()
     {
         return $this->measure_devices->last()->battery_voltage;
     }
