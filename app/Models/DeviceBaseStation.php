@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Installation;
 
 class DeviceBaseStation extends Model
 {
@@ -11,7 +12,8 @@ class DeviceBaseStation extends Model
     
     protected $appends = [
         'device_rover_count',
-        'battery_voltage'
+        'battery_voltage',
+        'available_memory'
     ];
 
     public function device()
@@ -29,6 +31,11 @@ class DeviceBaseStation extends Model
         return $this->hasMany('App\Models\ConfigurationBaseStation');
     }
 
+    public function installation(){
+        return $this->hasOne(Installation::class,'device_base_station_id');
+    }
+
+
     public function getDeviceRoverCountAttribute()
     {
         return $this->rovers()->count();
@@ -38,5 +45,10 @@ class DeviceBaseStation extends Model
     {
         //return $this->device->measure_devices->last()->battery_voltage;
         return $this->device->battery_voltage;
+    }
+
+    public function getAvailableMemoryAttribute()
+    {
+        return $this->device->available_memory;
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use App\Models\Installation;
+use Illuminate\Support\Facades\Auth;
 
 
 class InstallationController extends Controller
@@ -16,8 +18,29 @@ class InstallationController extends Controller
     public function index()
     {
         return Installation::all();
+    }
 
-    
+    public function getInstallationsByUser(){
+        try {
+            $user = Auth::user();
+            $groups = $user->groups;
+            $installations = collect([]);
+
+            foreach ($groups as $group) {
+                if($group->name == "admin")
+                    return response()->json(Installation::all(), 201); 
+                foreach ($group->installations as $install) {
+                    $installations->push($install);
+                }
+            }
+            return response()->json($installations, 201); 
+        } catch (\Exception $e) {
+            // Return Error Response
+            return response()->json([
+                'message' => $e
+            ], 500);
+        } 
+        
     }
  
  
@@ -37,7 +60,7 @@ class InstallationController extends Controller
                 'installation_date'=>$request->installation_date,
                 'last_human_intervention'=>$request->last_human_intervention
             ]);
-            return response()->json($installation, 201);; 
+            return response()->json($installation, 201); 
         } catch (\Exception $e) {
             // Return Error Response
             return response()->json([

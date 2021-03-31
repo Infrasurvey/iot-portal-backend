@@ -47,4 +47,7 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::apiResource('group', 'GroupController');
     Route::apiResource('installation', 'InstallationController');
     Route::apiResource('usergroup', 'UserGroupController');
+
+    Route::get('installationByUser', [InstallationController::class, 'getInstallationsByUser']);
+
 });

@@ -30,5 +30,10 @@ class UserGroupFactory extends Factory
             'group_id' => Group::inRandomOrder()->limit(1)->get()[0]->id,
             'is_group_admin' => true
         ];
+       /* return [
+            'user_id' => 2,
+            'group_id' => 5,
+            'is_group_admin' => true
+        ];*/
     }
 }
