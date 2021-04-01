@@ -16,6 +16,16 @@ class DeviceBaseStation extends Model
         'available_memory'
     ];
 
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'installation',
+        'device'
+    ];
+
     public function device()
     {
         return $this->morphOne('App\Models\Device', 'table');

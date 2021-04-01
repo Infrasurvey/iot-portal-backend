@@ -11,6 +11,22 @@ class Installation extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'name',
+        'group_id',
+        'device_base_station_id',
+        'active',
+        'image_path',
+        'installation_date',
+        'last_human_intervention'
+    ];
+
+
     protected $appends = [
         'device_rover_count',
         'battery_voltage',

@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use App\Models\Installation;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+
 
 
 class InstallationController extends Controller
@@ -53,12 +56,21 @@ class InstallationController extends Controller
     public function store(Request $request)
     {
         try {
+            //TODO mofiier ici
+            $file = $request->file('image');
+            $filename = $file->hashName();
+            $path = $file->storeAs(
+                'public/images', $filename
+            );
+            
             $installation = Installation::create([
                 'group_id' => $request->group_id,
+                'device_base_station_id' => $request->device_base_station_id,
                 'name' => $request->name,
-                'image_path' => $request->image_path,
+                'active' =>true,
+                'image_path' => $filename,
                 'installation_date'=>$request->installation_date,
-                'last_human_intervention'=>$request->last_human_intervention
+                'last_human_intervention'=>$request->installation_date
             ]);
             return response()->json($installation, 201); 
         } catch (\Exception $e) {
@@ -93,7 +105,7 @@ class InstallationController extends Controller
      */
     public function update(Request $request, Installation $installation)
     {
-        $installation->update($request->only(['group_id','name','image_path','installation_date','last_human_,intervention']));
+        $installation->update($request->only(['group_id','device_base_station_id','name','image_path','installation_date','last_human_,intervention']));
 
         return $installation;  
          
