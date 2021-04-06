@@ -56,12 +56,24 @@ class InstallationController extends Controller
     public function store(Request $request)
     {
         try {
-            //TODO mofiier ici
             $file = $request->file('image');
-            $filename = $file->hashName();
-            $path = $file->storeAs(
-                'public/images', $filename
-            );
+            $filename = null;
+            if(!empty($file)){
+                $filename = $file->hashName();
+                $path = $file->storeAs(
+                    'public/images', $filename
+                );
+            }
+            else{
+                $filename = 'default_image.png';
+            }
+
+            $validatedData = $request->validate([
+                'name' => 'required',
+                'group_id' => 'required',
+                'device_base_station_id' => 'required',
+                'installation_date' => 'required',
+              ]);
             
             $installation = Installation::create([
                 'group_id' => $request->group_id,
@@ -72,6 +84,7 @@ class InstallationController extends Controller
                 'installation_date'=>$request->installation_date,
                 'last_human_intervention'=>$request->installation_date
             ]);
+
             return response()->json($installation, 201); 
         } catch (\Exception $e) {
             // Return Error Response
@@ -91,7 +104,7 @@ class InstallationController extends Controller
      */
     public function show(Installation $installation)
     {
- 
+        echo asset('public/images/default_image.png');
          return $installation;
     }
 
