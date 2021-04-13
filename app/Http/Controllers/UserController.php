@@ -19,6 +19,17 @@ class UserController extends Controller
 
 
     /**
+     * Display a listing of users with their groups.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function usersWithGroups()
+    {
+        return User::with('groups')->get();
+    }
+
+
+    /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request

@@ -87,4 +87,33 @@ class UserGroupController extends Controller
         return response()->json(null, 204); 
          
     }
+
+
+
+    /**
+     * Update all of the usergroup relation for one user.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\UserGroup  $usergroup
+     * @return \Illuminate\Http\Response
+     */
+    public function updateUserGroupRelations(Request $request)
+    {
+        try {
+            UserGroup::where('user_id','=',$request->user_id)->delete();
+          foreach ($request->usergroups as $usergroup) {
+                $ug = UserGroup::create([ 
+                    'user_id'=>$usergroup['user_id'],
+                    'group_id'=>$usergroup['group_id'],
+                    'is_group_admin' => $usergroup['is_group_admin']
+                ]);
+                }
+            return response()->json($request, 201);; 
+        } catch (Exception $e) {
+            // Return Error Response
+            return response()->json([
+                'message' => $e
+            ], 500);
+        }            
+    }
 }

@@ -52,5 +52,7 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::apiResource('usergroup', 'UserGroupController');
 
     Route::get('installationByUser', [InstallationController::class, 'getInstallationsByUser']);
-
+    
+    Route::get('usersWithGroups', [UserController::class, 'usersWithGroups']);
+    Route::post('updateUserGroups', [UserGroupController::class, 'updateUserGroupRelations']);
 });

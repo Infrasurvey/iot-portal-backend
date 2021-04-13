@@ -9,4 +9,15 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 class UserGroup extends Model
 {
     use HasFactory;
+
+        /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'user_id',
+        'group_id',
+        'is_group_admin',
+    ];
 }
