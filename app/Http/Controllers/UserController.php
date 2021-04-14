@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -28,6 +29,24 @@ class UserController extends Controller
         return User::with('groups')->get();
     }
 
+        /**
+     * Return current user
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function currentUser()
+    {
+        try {
+            return response()->json(Auth::user(), 201);; 
+        } catch (\Exception $e) {
+            // Return Error Response
+            return response()->json([
+                'message' => $e
+            ], 500);
+        }
+        
+    }
+
 
     /**
      * Store a newly created resource in storage.
@@ -40,8 +59,15 @@ class UserController extends Controller
         try {
             $user = User::create([
                 'name' => $request->name,
+                'lastname' => $request->lastname,
+                'address' => $request->address,
+                'city' => $request->city,
+                'zip' => $request->zip,
+                'country' => $request->country,
+                'phone' => $request->phone,
                 'email' => $request->email,
-                'password' => $request->password
+                'password' => $request->password,
+                'language'=> $request->language
             ]);
             return response()->json($user, 201);; 
         } catch (\Exception $e) {
@@ -74,7 +100,7 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        $user->update($request->only(['name', 'email','email_verified_at','password']));
+        $user->update($request->only(['name','lastname','phone','email','address','zip','city','country','email_verified_at','password','language']));
 
         return $user;
     }

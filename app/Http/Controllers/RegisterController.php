@@ -19,11 +19,18 @@ class RegisterController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required',
+            'lastname' => 'required',
+            'address' => 'required',
+            'zip' => 'required',
+            'city' => 'required',
+            'country' => 'required',
+            'phone' => 'required',
             'email' => 'required|email',
             'password' => 'required',
-            'c_password' => 'required|same:password',
+            'cpassword' => 'required|same:password',
+            'language' => 'required',
         ]);
-   
+
         if($validator->fails()){
             return $this->sendError('Validation Error.', $validator->errors());       
         }
@@ -59,6 +66,42 @@ class RegisterController extends Controller
             } 
         } catch (\Throwable $th) {
             return $this->sendError('Unauthorised.', ['error'=>$th]);
+        }
+        
+    }
+
+        /**
+     * Update pwd
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function updatePwd(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'password'=> 'required',
+                'new_password' => 'required|min:5',
+                'c_password' => 'required|same:new_password',
+            ]);
+         
+            if($validator->fails()){
+                return $this->sendError('Validation Error.', $validator->errors());       
+            }
+          
+            $user = Auth::user(); 
+         
+            if(!Hash::check($request->password, $user->password)){
+                return $this->sendError('Error.', 'You have entered a wrong password');         
+            }else{
+                $user->password = Hash::make($request->new_password);
+                $user->save();
+               return $this->sendResponse('Success', 'Password successfully updated');
+
+            }
+                
+       
+        } catch (\Throwable $th) {
+            return $this->sendError('Error.', ['error'=>$th]);
         }
         
     }
