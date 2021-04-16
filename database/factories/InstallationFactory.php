@@ -30,7 +30,7 @@ class InstallationFactory extends Factory
             'device_base_station_id' => DeviceBaseStation::inRandomOrder()->limit(1)->get()[0]->id,
             'name' => $this->faker->name,
             'active' => true,
-            'image_path' => 'thisisapath',
+            'image_path' => 'default_image.png',
             'installation_date' => now(),
             'last_human_intervention'=>now()
         ];

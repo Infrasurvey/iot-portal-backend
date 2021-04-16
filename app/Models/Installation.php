@@ -39,7 +39,7 @@ class Installation extends Model
      * @var array
      */
     protected $hidden = [
-        'basestation',
+        //'basestation',
     ];
 
     public function group(){

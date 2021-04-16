@@ -45,6 +45,10 @@ class InstallationController extends Controller
         } 
         
     }
+
+    public function getCompleteInstallations(){
+        return Installation::with(['group','basestation'])->get();
+    }
  
  
     /**
@@ -104,7 +108,6 @@ class InstallationController extends Controller
      */
     public function show(Installation $installation)
     {
-        echo asset('public/images/default_image.png');
          return $installation;
     }
 
@@ -133,7 +136,10 @@ class InstallationController extends Controller
      */
     public function destroy(Installation $installation)
     {
-       $installation->delete();
+        if($installation->image_path != "default_image.png"){
+            Storage::delete('public/images/'.$installation->image_path);
+        }
+        $installation->delete();
  
         return response()->json(null, 204); 
          

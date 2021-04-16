@@ -56,7 +56,7 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::get('usersWithGroups', [UserController::class, 'usersWithGroups']);
     Route::post('updateUserGroups', [UserGroupController::class, 'updateUserGroupRelations']);
     Route::get('getCurrentUser', [UserController::class, 'currentUser']);
-
+    Route::get('getCompleteInstallations', [InstallationController::class, 'getCompleteInstallations']);
     Route::post('updatePwd', [RegisterController::class, 'updatePwd']);
 
 });
