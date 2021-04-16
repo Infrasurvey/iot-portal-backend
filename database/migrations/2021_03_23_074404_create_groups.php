@@ -15,8 +15,8 @@ class CreateGroups extends Migration
     {
         Schema::create('groups', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->bigInteger('organization_id')->unsigned();
-            $table->foreign('organization_id')->references('id')->on('organizations');
+            $table->bigInteger('organization_id')->unsigned()->nullable();
+            $table->foreign('organization_id')->references('id')->on('organizations')->cascadeOnUpdate()->nullOnDelete();
             $table->string('name')->nullable();
             $table->timestamps();
         });

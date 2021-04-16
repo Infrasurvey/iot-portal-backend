@@ -15,9 +15,9 @@ class CreateInstallations extends Migration
     {
         Schema::create('installations', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('group_id')->unsigned();
-            $table->foreign('group_id')->references('id')->on('groups');
-            $table->foreignId('device_base_station_id')->constrained();
+            $table->bigInteger('group_id')->unsigned()->nullable();
+            $table->foreign('group_id')->references('id')->on('groups')->cascadeOnUpdate()->nullOnDelete();
+            $table->foreignId('device_base_station_id')->nullable()->constrained()->cascadeOnUpdate()->nullOnDelete();
             $table->string('name')->nullable();
             $table->boolean('active')->nullable();
             $table->string('image_path')->nullable();
