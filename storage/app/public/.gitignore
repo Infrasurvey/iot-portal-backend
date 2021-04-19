@@ -1,3 +1,4 @@
 *
 !.gitignore
-!default_image.png
+!images/
+!images/default_image.png
