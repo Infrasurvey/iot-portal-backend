@@ -14,6 +14,6 @@ class DeviceRoverController extends Controller
 
     function getDeviceRover($id)
     {
-        return DeviceRover::find($id)->measure_rovers[0]->file;
+        return DeviceRover::find($id);
     }
 }

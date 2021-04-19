@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group( function () {
     //Work using system_id as PK
     Route::get('device/basestation/{id}', [DeviceBaseStationController::class, 'getDeviceBaseStation']);
     Route::get('device/basestation/{id}/configurations', [DeviceBaseStationController::class, 'getConfigurations']);
+    Route::get('device/basestation/{id}/rovers', [DeviceBaseStationController::class, 'getBaseStationWithRovers']);
 
     Route::get('device/rover/all', [DeviceRoverController::class, 'getDeviceRovers']);
     Route::get('device/rover/{id}', [DeviceRoverController::class, 'getDeviceRover']);

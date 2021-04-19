@@ -14,18 +14,17 @@ class DeviceBaseStationController extends Controller
 
     function getDeviceBaseStation($id)
     {
-        return DeviceBaseStation::whereHas('device', function($query) use ($id)
-        {
-            $query->where('system_id', $id);
-        })->get();
+        return DeviceBaseStation::find($id);
+    }
+
+    function getBaseStationWithRovers($id)
+    {
+        return DeviceBaseStation::with('rovers.positions')->get()->find($id);
     }
 
     function getConfigurations($id)
     {
-        $baseStation = DeviceBaseStation::whereHas('device', function($query) use ($id)
-        {
-            $query->where('system_id', $id);
-        })->first();
+        $baseStation = DeviceBaseStation::find($id);
 
         if ($baseStation == null)
         {

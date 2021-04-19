@@ -10,6 +10,14 @@ class DeviceRover extends Model
 {
     use HasFactory;
 
+    protected $appends = [
+        'battery_voltage'
+    ];
+
+    protected $hidden = [
+        'device'
+    ];
+
     public function device()
     {
         return $this->morphOne('App\Models\Device', 'table');
@@ -23,5 +31,10 @@ class DeviceRover extends Model
     public function positions()
     {
         return $this->hasMany('App\Models\Position');
+    }
+
+    public function getBatteryVoltageAttribute()
+    {
+        return $this->device->battery_voltage;
     }
 }
