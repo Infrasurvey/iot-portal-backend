@@ -1,0 +1,25 @@
+GEOMON rxInfo : V2.1
+
+BASE NAME     : GM_BASE_0033
+MCU_FIRMWARE  : 0x19
+BBB_MAC       : 0x38D2694C4215
+BBB_VERSION   : GM_BASE_STATION_BBB:1.72
+BBB_MD5       : ca73d95ee95fc2e14cab2266626e9f87  /home/ubuntu/GM_BASE_STATION_BBB
+RNX2RTKP_MD5  : e2b03f00274fcdc259c7d57ee3cf3d96  /home/ubuntu/bin/rnx2rtkp
+CONVBIN_MD5   : 21674412c75139ca3047e1a5a8170d15  /home/ubuntu/bin/convbin
+SD avail.     : 0[MB]
+VBat          : 12.9[V]
+
+GPS_ID    : 0
+UNIQUE_ID : 0x0000
+FIRMWARE  : 0x19
+VBat      : 12.6[V]
+RSSI      : -67[dBm]
+AccX      : 26
+AccY      : -1241
+AccZ      : -46
+CoordX    : 4360810.979534[m]
+CoordY    : 530662.999714[m]
+CoordZ    : 4609988.600036[m]
+SD avail. : 0[MB]
+

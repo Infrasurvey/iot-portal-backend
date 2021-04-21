@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\DeviceBaseStation;
+use App\Models\ConfigurationBaseStation;
 
 class DeviceBaseStationController extends Controller
 {
@@ -22,17 +23,8 @@ class DeviceBaseStationController extends Controller
         return DeviceBaseStation::with('rovers.positions')->get()->find($id);
     }
 
-    function getConfigurations($id)
+    function getBaseStationConfigs($id)
     {
-        $baseStation = DeviceBaseStation::find($id);
-
-        if ($baseStation == null)
-        {
-            return null;
-        }
-        else
-        {
-            return $baseStation->configurations;
-        }
+        return DeviceBaseStation::find($id)->configurations;
     }
 }

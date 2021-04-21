@@ -13,7 +13,8 @@ class DeviceBaseStation extends Model
     protected $appends = [
         'device_rover_count',
         'battery_voltage',
-        'available_memory'
+        'available_memory',
+        'last_configuration'
     ];
 
     /**
@@ -23,7 +24,8 @@ class DeviceBaseStation extends Model
      */
     protected $hidden = [
         'installation',
-        'device'
+        'device',
+        'configurations'
     ];
 
     public function device()
@@ -43,6 +45,11 @@ class DeviceBaseStation extends Model
 
     public function installation(){
         return $this->hasOne(Installation::class,'device_base_station_id');
+    }
+
+    public function getLastConfigurationAttribute()
+    {
+        return $this->configurations->last();
     }
 
 
