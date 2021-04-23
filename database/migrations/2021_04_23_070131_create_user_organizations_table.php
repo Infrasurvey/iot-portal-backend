@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateUserGroups extends Migration
+class CreateUserOrganizationsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,15 +13,13 @@ class CreateUserGroups extends Migration
      */
     public function up()
     {
-        Schema::create('user_groups', function (Blueprint $table) {
-            //$table->engine = "InnoDB";
-            //$table->id();
+        Schema::create('user_organizations', function (Blueprint $table) {
             $table->bigInteger('user_id')->unsigned();
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnUpdate()->cascadeOnDelete();
-            $table->bigInteger('group_id')->unsigned();
-            $table->foreign('group_id')->references('id')->on('groups')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->bigInteger('organization_id')->unsigned();
+            $table->foreign('organization_id')->references('id')->on('organizations')->cascadeOnUpdate()->cascadeOnDelete();
             $table->timestamps();
-            $table->primary(['user_id', 'group_id']);
+            $table->primary(['user_id', 'organization_id']);
         });
     }
 
@@ -32,6 +30,6 @@ class CreateUserGroups extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_groups');
+        Schema::dropIfExists('user_organizations');
     }
 }

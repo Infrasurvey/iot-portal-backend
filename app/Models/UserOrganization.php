@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
-class UserGroup extends Model
+class UserOrganization extends Model
 {
     use HasFactory;
 
@@ -17,6 +17,6 @@ class UserGroup extends Model
      */
     protected $fillable = [
         'user_id',
-        'group_id'
+        'organization_id'
     ];
 }

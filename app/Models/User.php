@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Group;
+use App\Models\Organization;
 
 class User extends Authenticatable
 {
@@ -42,6 +43,10 @@ class User extends Authenticatable
     ];
 
     public function groups(){
-        return $this->belongsToMany(Group::class, 'user_groups')->withPivot('is_group_admin');
+        return $this->belongsToMany(Group::class, 'user_groups');
+    }
+
+    public function organizations(){
+        return $this->belongsToMany(Organization::class, 'user_organizations');
     }
 }
