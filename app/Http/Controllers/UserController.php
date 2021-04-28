@@ -26,7 +26,32 @@ class UserController extends Controller
      */
     public function usersWithGroups()
     {
-        return User::with('groups')->get();
+        return User::with(['groups','organizations'])->get();
+    }
+
+    public function getUsersByOrganization($id){
+        return User::whereHas('groups.organization',function($query) use ($id){
+            $query->where('id',$id);
+        })->with(['groups','organizations'])->get();
+    }
+
+    public function getAdminsByOrganization($id){
+        return User::whereHas('organizations',function($query) use ($id){
+            $query->where('id',$id);
+        })->with(['groups','organizations'])->get();
+    }
+
+    public function getUsersByGroup($id){
+        return User::whereHas('groups',function($query) use ($id){
+            $query->where('id',$id);
+        })->with(['groups','organizations'])->get();
+    }
+
+    public function getVisibleUsers(){
+        $currentUser = Auth::user();
+        return User::whereHas('groups.organization.users',function($query) use ($currentUser){
+            $query->where('id',$currentUser->id);
+        })->with(['groups','organizations'])->get();
     }
 
         /**

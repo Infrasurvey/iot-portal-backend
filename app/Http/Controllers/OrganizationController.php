@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Organization;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class OrganizationController extends Controller
 {
@@ -16,6 +17,37 @@ class OrganizationController extends Controller
     {
         return Organization::all();
     }
+
+     /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function organizationsWithGroups()
+    {
+        return Organization::with('groups')->get();
+    }
+
+    public function getCurrentVisibleOrganizations(){
+        $currentUser = Auth::user();
+        return Organization::whereHas('users',function($query) use ($currentUser){
+            $query->where('id',$currentUser->id);
+        })->with('groups')->get();
+    }
+
+    public function getGroupsByOrganization($id){
+        return Organization::find($id)->groups;
+    }
+
+         /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function organizationWithGroups($id)
+    {
+        return Organization::with('groups')->get()->find($id);   
+     }
 
 
     /**

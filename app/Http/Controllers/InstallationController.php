@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use App\Models\Installation;
+use App\Models\Organization;
+
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
@@ -46,8 +48,27 @@ class InstallationController extends Controller
         
     }
 
+    public function getInstallationsByOrganization($id){
+        return Installation::whereHas('group.organization',function($query) use ($id){
+            $query->where('id',$id);
+        })->with('group.organization')->get();
+    }
+
+    public function getInstallationsByGroup($id){
+        return Installation::whereHas('group',function($query) use ($id){
+            $query->where('id',$id);
+        })->with('group.organization')->get();
+    }
+
     public function getCompleteInstallations(){
-        return Installation::with(['group','basestation'])->get();
+        return Installation::with(['group.organization','basestation'])->get();
+    }
+
+    public function getVisibleInstallations(){
+        $currentUser = Auth::user();
+        return Installation::whereHas('group.organization.users',function($query) use ($currentUser){
+            $query->where('id',$currentUser->id);
+        })->with(['group.organization','basestation'])->get();
     }
  
  

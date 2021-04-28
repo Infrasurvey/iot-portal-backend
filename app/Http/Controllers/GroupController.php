@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Group;
+use Illuminate\Support\Facades\Auth;
 
 class GroupController extends Controller
 {
@@ -18,6 +19,20 @@ class GroupController extends Controller
 
     
     }
+
+    public function getCurrentVisibleGroups(){
+        $currentUser = Auth::user();
+        return Group::whereHas('users',function($query) use ($currentUser){
+            $query->where('id',$currentUser->id);
+        })->get();
+    }
+
+    public function getGroupWithOrganization($id){
+
+        return Group::with('organization')->get()->find($id);
+    }
+
+    
  
  
     /**

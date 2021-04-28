@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\UserOrganization;
+use App\Models\UserGroup;
 
-class UserOrganizationController extends Controller
+class UserGroupController extends Controller
 {
      /**
      * Display a listing of the resource.
@@ -14,7 +14,7 @@ class UserOrganizationController extends Controller
      */
     public function index()
     {
-        return UserOrganization::all();
+        return UserGroup::all();
 
     
     }
@@ -29,11 +29,11 @@ class UserOrganizationController extends Controller
     public function store(Request $request)
     {
         try {
-            $userorganization = UserOrganization::create([ 
+            $usergroup = UserGroup::create([ 
                 'user_id'=>$request->user_id,
-                'organization_id'=>$request->organization_id
+                'group_id'=>$request->group_id
             ]);
-            return response()->json($userorganization, 201);; 
+            return response()->json($usergroup, 201);; 
         } catch (\Exception $e) {
             // Return Error Response
             return response()->json([
@@ -47,12 +47,12 @@ class UserOrganizationController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\UserOrganization  $userorganization
+     * @param  \App\UserGroup  $usergroup
      * @return \Illuminate\Http\Response
      */
-    public function show(UserOrganization $userorganization)
+    public function show(UserGroup $usergroup)
     {
-        return $userorganization;
+        return $usergroup;
          
     }
  
@@ -61,14 +61,14 @@ class UserOrganizationController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\UserOrganization  $userorganization
+     * @param  \App\UserGroup  $usergroup
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, UserOrganization $userorganization)
+    public function update(Request $request, UserGroup $usergroup)
     {
-        $userorganization->update($request->only(['user_id','organization_id']));
+        $usergroup->update($request->only(['user_id','group_id']));
 
-        return $userorganization;  
+        return $usergroup;  
          
     }
  
@@ -76,12 +76,12 @@ class UserOrganizationController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\UserOrganization  $userorganization
+     * @param  \App\UserGroup  $usergroup
      * @return \Illuminate\Http\Response
      */
-    public function destroy(UserOrganization $userorganization)
+    public function destroy(UserGroup $usergroup)
     {
-        $userorganization->delete();
+        $usergroup->delete();
  
         return response()->json(null, 204); 
          
@@ -89,22 +89,50 @@ class UserOrganizationController extends Controller
 
 
 
-    /**
-     * Update all of the userorganization relation for one user.
+  /**
+     * Update all of the Group relation for one user.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\UserOrganization  $userorganization
+     * @param  \App\UserGroup  $usergroup
      * @return \Illuminate\Http\Response
      */
-    public function updateUserOrganizationRelations(Request $request)
+    public function updateUserGroupRelations(Request $request)
     {
         try {
-            UserOrganization::where('user_id','=',$request->user_id)->delete();
-          foreach ($request->userorganizations as $userorganization) {
-                $ug = UserOrganization::create([ 
-                    'user_id'=>$userorganization['user_id'],
-                    'organization_id'=>$userorganization['organization_id']                ]);
+            foreach ($request->relationstoremove as $relationtoremove) {
+                if(UserGroup::where('user_id','=',$relationtoremove['user_id'])->where('group_id','=',$relationtoremove['group_id'])->exists()){
+                    UserGroup::where('user_id','=',$relationtoremove['user_id'])->where('group_id','=',$relationtoremove['group_id'])->delete();
                 }
+            }
+            foreach ($request->usergroups as $usergroup) {
+                $exist = UserGroup::where('user_id','=',$usergroup['user_id'])->where('group_id','=',$usergroup['group_id'])->exists();
+                if(!$exist){
+                    $ug = UserGroup::create([ 
+                        'user_id'=>$usergroup['user_id'],
+                        'group_id'=>$usergroup['group_id']]);
+                }
+            }
+            return response()->json($request, 201);; 
+        } catch (Exception $e) {
+            // Return Error Response
+            return response()->json([
+                'message' => $e
+            ], 500);
+        }            
+    }
+
+    public function addUserGroups(Request $request)
+    {
+        try {
+          foreach ($request->usergroups as $usergroup) {
+              $exist = UserGroup::where('user_id','=',$usergroup['user_id'])->where('group_id','=',$usergroup['group_id'])->exists();
+              if(!$exist){
+                $ug = UserGroup::create([ 
+                    'user_id'=>$usergroup['user_id'],
+                    'group_id'=>$usergroup['group_id']]);
+                }
+              }
+                
             return response()->json($request, 201);; 
         } catch (Exception $e) {
             // Return Error Response

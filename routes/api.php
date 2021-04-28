@@ -23,6 +23,7 @@ use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\InstallationController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\UserGroupController;
+use App\Http\Controllers\UserOrganizationController;
 use App\Http\Controllers\RegisterController;
 
 
@@ -47,17 +48,38 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::get('device/rover/{id}', [DeviceRoverController::class, 'getDeviceRover']);
     
     Route::apiResource('user', 'UserController');
-    Route::apiResource('organization', 'OrganizationController');
-    Route::apiResource('group', 'GroupController');
-    Route::apiResource('installation', 'InstallationController');
-    Route::apiResource('usergroup', 'UserGroupController');
-
-    Route::get('installationByUser', [InstallationController::class, 'getInstallationsByUser']);
-    
     Route::get('usersWithGroups', [UserController::class, 'usersWithGroups']);
     Route::post('updateUserGroups', [UserGroupController::class, 'updateUserGroupRelations']);
+    Route::post('updateUserOrganizations', [UserOrganizationController::class, 'updateUserOrganizationRelations']);
+    Route::post('addUserGroups', [UserGroupController::class, 'addUserGroups']);
+    Route::post('addUserOrganizations', [UserOrganizationController::class, 'addUserOrganizations']);
     Route::get('getCurrentUser', [UserController::class, 'currentUser']);
+    Route::get('getUsersByOrganization/{id}', [UserController::class, 'getUsersByOrganization']);
+    Route::get('getAdminsByOrganization/{id}', [UserController::class, 'getAdminsByOrganization']);
+    Route::get('getUsersByGroup/{id}', [UserController::class, 'getUsersByGroup']);
+    Route::get('getVisibleUsers', [UserController::class, 'getVisibleUsers']);
+
+    Route::get('getGroupWithOrganization/{id}', [GroupController::class, 'getGroupWithOrganization']);
+
+    Route::apiResource('organization', 'OrganizationController');
+    Route::get('organizationWithGroups', [OrganizationController::class, 'organizationsWithGroups']);
+    Route::get('organizationWithGroups/{id}', [OrganizationController::class, 'organizationWithGroups']);
+    Route::get('getCurrentVisibleOrganizations', [OrganizationController::class, 'getCurrentVisibleOrganizations']);
+    Route::get('getGroupsByOrganization/{id}', [OrganizationController::class, 'getGroupsByOrganization']);
+
+    Route::apiResource('group', 'GroupController');
+    Route::get('getCurrentVisibleGroups', [GroupController::class, 'getCurrentVisibleGroups']);
+
+    Route::apiResource('installation', 'InstallationController');
+
+    Route::get('installationByUser', [InstallationController::class, 'getInstallationsByUser']);
     Route::get('getCompleteInstallations', [InstallationController::class, 'getCompleteInstallations']);
+    Route::get('getVisibleInstallations', [InstallationController::class, 'getVisibleInstallations']);
+    Route::get('getInstallationsByOrganization/{id}', [InstallationController::class, 'getInstallationsByOrganization']);
+    Route::get('getInstallationsByGroup/{id}', [InstallationController::class, 'getInstallationsByGroup']);
+
+    Route::apiResource('usergroup', 'UserGroupController');
+
     Route::post('updatePwd', [RegisterController::class, 'updatePwd']);
 
 });
