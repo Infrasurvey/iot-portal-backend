@@ -22,7 +22,7 @@ class GroupController extends Controller
 
     public function getCurrentVisibleGroups(){
         $currentUser = Auth::user();
-        return Group::whereHas('users',function($query) use ($currentUser){
+        return Group::whereHas('organization.users',function($query) use ($currentUser){
             $query->where('id',$currentUser->id);
         })->get();
     }

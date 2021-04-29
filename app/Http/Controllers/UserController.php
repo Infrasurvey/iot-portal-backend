@@ -51,7 +51,15 @@ class UserController extends Controller
         $currentUser = Auth::user();
         return User::whereHas('groups.organization.users',function($query) use ($currentUser){
             $query->where('id',$currentUser->id);
-        })->with(['groups','organizations'])->get();
+        })->with(["organizations" => function($q) use ($currentUser){
+            $q->whereHas('users',function($query) use ($currentUser){
+                $query->where('id',$currentUser->id);
+            });
+        } ,"groups" => function($q) use ($currentUser){
+            $q->whereHas('organization.users',function($query) use ($currentUser){
+                $query->where('id',$currentUser->id);
+            });
+        }])->get();
     }
 
         /**
