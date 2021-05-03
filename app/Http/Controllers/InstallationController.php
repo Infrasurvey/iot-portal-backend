@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use App\Models\Installation;
 use App\Models\Organization;
+use App\Models\User;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -31,9 +32,9 @@ class InstallationController extends Controller
             $groups = $user->groups;
             $installations = collect([]);
 
+            if($user->is_admin)
+                return response()->json(Installation::all(), 201); 
             foreach ($groups as $group) {
-                if($group->name == "admin")
-                    return response()->json(Installation::all(), 201); 
                 foreach ($group->installations as $install) {
                     $installations->push($install);
                 }
@@ -46,6 +47,11 @@ class InstallationController extends Controller
             ], 500);
         } 
         
+    }
+    public function getUsersByInstallation($id){
+        return User::whereHas('groups.installations',function($query) use ($id){
+            $query->where('id',$id);
+        })->get();
     }
 
     public function getInstallationsByOrganization($id){
@@ -66,6 +72,8 @@ class InstallationController extends Controller
 
     public function getVisibleInstallations(){
         $currentUser = Auth::user();
+        if($currentUser->is_admin)
+            return response()->json(Installation::with(['group.organization','basestation'])->get(), 201); 
         return Installation::whereHas('group.organization.users',function($query) use ($currentUser){
             $query->where('id',$currentUser->id);
         })->with(['group.organization','basestation'])->get();
@@ -118,6 +126,34 @@ class InstallationController extends Controller
             ], 500);
         }   
          
+    }
+
+
+    public function updateInstallationImages(Request $request,$id){
+        try {
+            $installation = Installation::find($id);
+            $file = $request->file('image');
+            $filename = null;
+            if(!empty($file)){
+                $filename = $file->hashName();
+                $path = $file->storeAs(
+                    'public/images', $filename
+                );
+                if($installation->image_path != "default_image.png"){
+                    Storage::delete('public/images/'.$installation->image_path);
+                }
+                $installation->image_path = $filename;
+                
+            }
+            $installation->name = $request->name;
+            $installation->save();
+            return response()->json($installation, 201); 
+        } catch (\Exception $e) {
+            // Return Error Response
+            return response()->json([
+                'message' => $e
+            ], 500);
+        }   
     }
  
  

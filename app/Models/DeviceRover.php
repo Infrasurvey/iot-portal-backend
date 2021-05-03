@@ -11,7 +11,8 @@ class DeviceRover extends Model
     use HasFactory;
 
     protected $appends = [
-        'battery_voltage'
+        'battery_voltage',
+        'system_id'
     ];
 
     protected $hidden = [
@@ -36,5 +37,9 @@ class DeviceRover extends Model
     public function getBatteryVoltageAttribute()
     {
         return $this->device->battery_voltage;
+    }
+    public function getSystemIdAttribute()
+    {
+        return $this->device->system_id;
     }
 }

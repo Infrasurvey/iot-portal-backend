@@ -30,6 +30,8 @@ class OrganizationController extends Controller
 
     public function getCurrentVisibleOrganizations(){
         $currentUser = Auth::user();
+        if($currentUser->is_admin)
+            return response()->json(Organization::with('groups')->get(), 201);
         return Organization::whereHas('users',function($query) use ($currentUser){
             $query->where('id',$currentUser->id);
         })->with('groups')->get();

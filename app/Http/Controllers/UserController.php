@@ -49,6 +49,8 @@ class UserController extends Controller
 
     public function getVisibleUsers(){
         $currentUser = Auth::user();
+        if($currentUser->is_admin)
+            return response()->json(User::with(['organizations','groups'])->get(), 201);
         return User::whereHas('groups.organization.users',function($query) use ($currentUser){
             $query->where('id',$currentUser->id);
         })->with(["organizations" => function($q) use ($currentUser){

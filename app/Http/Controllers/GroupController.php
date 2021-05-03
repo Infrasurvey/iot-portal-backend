@@ -22,6 +22,8 @@ class GroupController extends Controller
 
     public function getCurrentVisibleGroups(){
         $currentUser = Auth::user();
+        if($currentUser->is_admin)
+            return response()->json(Group::all(), 201);
         return Group::whereHas('organization.users',function($query) use ($currentUser){
             $query->where('id',$currentUser->id);
         })->get();
