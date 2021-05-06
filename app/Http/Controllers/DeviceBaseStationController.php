@@ -32,4 +32,6 @@ class DeviceBaseStationController extends Controller
     {
         return DeviceBaseStation::find($id)->configurations;
     }
+
+
 }

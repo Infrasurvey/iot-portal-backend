@@ -79,6 +79,17 @@ class InstallationController extends Controller
         })->with(['group.organization','basestation'])->get();
     }
  
+    function getBasestationByInstallation($id){
+        return Installation::find($id)->basestation;
+    }
+
+    function getBaseStationConfigsByInstallation($id){
+        return Installation::find($id)->basestation->configurations;
+    }
+
+    function getBaseStationRoversByInstallation($id){
+        return Installation::find($id)->basestation->rovers;
+    }
  
     /**
      * Store a newly created resource in storage.

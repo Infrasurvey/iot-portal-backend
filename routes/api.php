@@ -25,6 +25,7 @@ use App\Http\Controllers\GroupController;
 use App\Http\Controllers\UserGroupController;
 use App\Http\Controllers\UserOrganizationController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\ConfigurationController;
 
 
 Route::post('register', [RegisterController::class, 'register']);
@@ -72,17 +73,27 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::get('getCurrentVisibleGroups', [GroupController::class, 'getCurrentVisibleGroups']);
 
     Route::apiResource('installation', 'InstallationController');
+    Route::get('installation/{id}/basestation', [InstallationController::class, 'getBasestationByInstallation']);
+    Route::get('installation/{id}/basestation/configurations', [InstallationController::class, 'getBaseStationConfigsByInstallation']);
+    Route::get('installation/{id}/basestation/rovers', [InstallationController::class, 'getBaseStationRoversByInstallation']);
+    Route::get('installation/{id}/basestation/roversPositions', [InstallationController::class, 'getBaseStationRoversPositionsByInstallation']);
+
     Route::post('updateInstallationImage/{id}', [InstallationController::class, 'updateInstallationImages']);
     Route::get('getUsersByInstallation/{id}', [InstallationController::class, 'getUsersByInstallation']);
 
     Route::get('installationByUser', [InstallationController::class, 'getInstallationsByUser']);
     Route::get('getCompleteInstallations', [InstallationController::class, 'getCompleteInstallations']);
-    Route::get('getVisibleInstallations', [InstallationController::class, 'getVisibleInstallations']);
+    Route::get('getInstallations', [InstallationController::class, 'getVisibleInstallations']);
     Route::get('getInstallationsByOrganization/{id}', [InstallationController::class, 'getInstallationsByOrganization']);
     Route::get('getInstallationsByGroup/{id}', [InstallationController::class, 'getInstallationsByGroup']);
 
     Route::apiResource('usergroup', 'UserGroupController');
 
     Route::post('updatePwd', [RegisterController::class, 'updatePwd']);
+
+    Route::get('installation/{id}/basestation/pendingConfiguration', [ConfigurationController::class, 'getPendingConfiguration']);
+    Route::get('installation/{id}/basestation/removePendingConfiguration', [ConfigurationController::class, 'removePendingConfiguration']);
+    Route::post('installation/{id}/basestation/applyNewConfiguration', [ConfigurationController::class, 'applyNewConfiguration']);
+
 
 });

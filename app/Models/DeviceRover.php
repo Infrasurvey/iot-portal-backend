@@ -12,11 +12,14 @@ class DeviceRover extends Model
 
     protected $appends = [
         'battery_voltage',
-        'system_id'
+        'system_id',
+        'last_communication'
     ];
 
     protected $hidden = [
-        'device'
+        'device',
+        'measure_rovers',
+        'positions'
     ];
 
     public function device()
@@ -41,5 +44,26 @@ class DeviceRover extends Model
     public function getSystemIdAttribute()
     {
         return $this->device->system_id;
+    }
+
+    public function getLastCommunicationAttribute(){
+        try {
+            $position = $this->positions->last();
+            $measure = $this->measure_rovers->last();
+            if($position != null || $measure != null){
+                $date1 = $this->positions->last()->file->creation_time;
+                $date2 = $this->measure_rovers->last()->file->creation_time;
+                if($date1 > $date2){
+                    return $date1;
+                }
+            return $date2;
+        }
+
+        return null;
+        
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+        
     }
 }

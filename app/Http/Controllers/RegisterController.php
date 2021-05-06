@@ -56,6 +56,7 @@ class RegisterController extends Controller
                 $user = Auth::user(); 
                 $success['token'] =  $user->createToken('APIToken')->plainTextToken; 
                 $success['name'] =  $user->name;
+                $success['lastname'] =  $user->lastname;
                 $success['email'] =  $user->email;
                 $success['groups'] =  $user->groups;
        

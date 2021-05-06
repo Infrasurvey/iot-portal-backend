@@ -20,6 +20,10 @@ class Device extends Model
 
     public function getBatteryVoltageAttribute()
     {
-        return $this->measure_devices->last()->battery_voltage;
+        $measure =$this->measure_devices->last();
+        if($measure != null){
+            return $this->measure_devices->last()->battery_voltage;
+        }
+        return null;
     }
 }
