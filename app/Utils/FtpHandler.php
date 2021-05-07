@@ -80,17 +80,36 @@ class FtpHandler
         try {
             $filePath = "/data/Geomon/" . $filePath;
             $file = fopen("temp.txt", "w");
+            
             if (ftp_fget($this->ftp, $file, $filePath, FTP_ASCII) == FALSE)
             {
                 //echo("File $filePath not found.\n");
                 ftp_close($this->ftp);
                 return null;
             }
-        
             // Parse the rxInfo file
             $fileRows = file('temp.txt');
             fclose($file);
             return $fileRows;
+        } catch (\Throwable $th) {
+            return null;
+        }
+        
+    }
+
+    function getLastModifiedDate($filePath){
+        try {
+            $filePath = "/data/Geomon/" . $filePath;
+            $lastchanged = ftp_mdtm($this->ftp, $filePath);
+            
+            if ($lastchanged != -1)
+            {
+                return date("m.d.Y H:i:s.",$lastchanged);
+            }
+            else
+            {   
+                return null;
+            }
         } catch (\Throwable $th) {
             return null;
         }

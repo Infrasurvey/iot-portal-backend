@@ -83,7 +83,7 @@ Route::middleware('auth:sanctum')->group( function () {
 
     Route::get('installationByUser', [InstallationController::class, 'getInstallationsByUser']);
     Route::get('getCompleteInstallations', [InstallationController::class, 'getCompleteInstallations']);
-    Route::get('getInstallations', [InstallationController::class, 'getVisibleInstallations']);
+    Route::get('getVisibleInstallations', [InstallationController::class, 'getVisibleInstallations']);
     Route::get('getInstallationsByOrganization/{id}', [InstallationController::class, 'getInstallationsByOrganization']);
     Route::get('getInstallationsByGroup/{id}', [InstallationController::class, 'getInstallationsByGroup']);
 

@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         \App\Models\User::factory()->create([
             'name' => 'admin',
-            'lastname' => 'admin lastname',
+            'lastname' => '',
             'address' => 'Rue du Moulin',
             'zip' => '1400',
             'city' => 'Yverdon-les-Bains',
