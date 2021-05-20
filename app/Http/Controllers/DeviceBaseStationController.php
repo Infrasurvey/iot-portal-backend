@@ -10,7 +10,7 @@ class DeviceBaseStationController extends Controller
 {
     function getDeviceBaseStations()
     {
-        return DeviceBaseStation::all();
+        return DeviceBaseStation::all()->makeHidden(['rovers','last_configuration']);
     }
 
     function getDeviceBaseStation($id)

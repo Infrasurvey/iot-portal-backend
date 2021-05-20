@@ -9,8 +9,20 @@ class MeasureRover extends Model
 {
     use HasFactory;
 
+    protected $appends = [
+        'date',
+    ];
+
+    protected $hidden = [
+        'file',
+    ];
+
     public function file()
     {
         return $this->belongsTo('App\Models\File');
+    }
+
+    public function getDateAttribute(){
+        return $this->file->creation_time;
     }
 }

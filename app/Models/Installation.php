@@ -73,25 +73,7 @@ class Installation extends Model
     }
 
     public function getLastCommunicationAttribute(){
-        $biggest_date = $this->basestation->rovers->last()->last_communication;
-        $j = $this->basestation->rovers->count();
-        for($i=0; $i < $j ; $i++) { 
-            $date1 = $this->basestation->rovers->get($i)->last_communication;
-            if($date1 != null){
-                if($date1 > $biggest_date){
-                    $biggest_date = $date1;
-                }
-            }
-        }
-
-        $device_last_time = $this->basestation->device->measure_devices->last()->file->creation_time;
-
-        $date = $biggest_date;
-        if($device_last_time > $date){
-            $date = $device_last_time;
-        }
-    
-        return $date;
+        return $this->basestation->last_communication;
     }
 
 }

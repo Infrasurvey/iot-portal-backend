@@ -14,7 +14,8 @@ class DeviceBaseStation extends Model
         'device_rover_count',
         'battery_voltage',
         'available_memory',
-        'last_configuration'
+        'last_configuration',
+        'last_communication'
     ];
 
     /**
@@ -25,7 +26,7 @@ class DeviceBaseStation extends Model
     protected $hidden = [
         'installation',
         'device',
-        'configurations'
+        'configurations',
     ];
 
     public function device()
@@ -67,5 +68,40 @@ class DeviceBaseStation extends Model
     public function getAvailableMemoryAttribute()
     {
         return $this->device->available_memory;
+    }
+
+    public function getLastCommunicationAttribute(){
+        $biggest_date = null;
+        $j = $this->rovers->count();
+        for($i=0; $i < $j ; $i++) { 
+            $rover = $this->rovers->get($i);
+            if($rover != null)
+            {
+                $date1 = $this->rovers->get($i)->last_communication;
+                if($date1 != null){
+                    if($biggest_date == null)
+                    {
+                        $biggest_date = $date1;
+                    }
+                    if($date1 > $biggest_date){
+                        $biggest_date = $date1;
+                    }
+                }
+            }
+            
+        }
+        $date = $biggest_date;
+        $last_device = $this->device->measure_devices->last();
+        if($last_device != null)
+        {
+            $device_last_time = $this->device->measure_devices->last()->file->creation_time;
+            if($device_last_time > $date){
+                $date = $device_last_time;
+            }
+        }
+        
+        
+    
+        return $date;
     }
 }

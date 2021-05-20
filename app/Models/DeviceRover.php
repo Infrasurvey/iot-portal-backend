@@ -19,12 +19,17 @@ class DeviceRover extends Model
     protected $hidden = [
         'device',
         'measure_rovers',
-        'positions'
+        'positions',
+        'basestation'
     ];
 
     public function device()
     {
         return $this->morphOne('App\Models\Device', 'table');
+    }
+
+    public function basestation(){
+        return $this->belongsTo('App\Models\DeviceBaseStation','device_base_station_id');
     }
 
     public function measure_rovers()
@@ -51,8 +56,8 @@ class DeviceRover extends Model
             $position = $this->positions->last();
             $measure = $this->measure_rovers->last();
             if($position != null || $measure != null){
-                $date1 = $this->positions->last()->file->creation_time;
-                $date2 = $this->measure_rovers->last()->file->creation_time;
+                $date1 = $this->positions->last()->date;
+                $date2 = $this->measure_rovers->last()->date;
                 if($date1 > $date2){
                     return $date1;
                 }
