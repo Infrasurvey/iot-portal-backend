@@ -33,5 +33,9 @@ class DeviceBaseStationController extends Controller
         return DeviceBaseStation::find($id)->configurations;
     }
 
+    function getAvailableBasestations()
+    {
+        return DeviceBaseStation::doesnthave('installation')->get()->makeHidden(['rovers','last_configuration']);
+    }
 
 }

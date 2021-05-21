@@ -69,7 +69,10 @@ class Installation extends Model
     }
 
     public function getLastConfigurationAttribute(){
-        return $this->basestation->configurations->last()->configuration_date;
+        if($this->basestation->configurations->last() != null){
+            return $this->basestation->configurations->last()->configuration_date;
+        }
+        return null;
     }
 
     public function getLastCommunicationAttribute(){

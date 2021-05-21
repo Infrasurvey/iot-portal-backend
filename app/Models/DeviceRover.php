@@ -13,7 +13,8 @@ class DeviceRover extends Model
     protected $appends = [
         'battery_voltage',
         'system_id',
-        'last_communication'
+        'last_communication',
+        'default_position'
     ];
 
     protected $hidden = [
@@ -40,6 +41,17 @@ class DeviceRover extends Model
     public function positions()
     {
         return $this->hasMany('App\Models\Position');
+    }
+
+    public function getDefaultPositionAttribute()
+    {
+        $pos = $this->positions->last();
+        if($pos != null){
+            return $pos;
+        }
+        else{
+            return null;
+        }
     }
 
     public function getBatteryVoltageAttribute()

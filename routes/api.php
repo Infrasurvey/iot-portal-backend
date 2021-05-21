@@ -40,11 +40,14 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::get('device/{id}', [DeviceController::class, 'getDevice']);
 
     Route::get('device/basestation/all', [DeviceBaseStationController::class, 'getDeviceBaseStations']);
+    Route::get('device/basestation/available', [DeviceBaseStationController::class, 'getAvailableBasestations']);
+
     //Work using system_id as PK
     Route::get('device/basestation/{id}', [DeviceBaseStationController::class, 'getDeviceBaseStation']);
     Route::get('device/basestation/{id}/configurations', [DeviceBaseStationController::class, 'getBaseStationConfigs']);
     Route::get('device/basestation/{id}/rovers', [DeviceBaseStationController::class, 'getBaseStationWithRovers']);
     Route::get('device/basestation/{id}/roversPositions', [DeviceBaseStationController::class, 'getBaseStationWithRoversPositions']);
+
 
     Route::get('device/rover/all', [DeviceRoverController::class, 'getDeviceRovers']);
     Route::get('device/rover/{id}', [DeviceRoverController::class, 'getDeviceRover']);
@@ -76,7 +79,7 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::get('installation/{id}/basestation', [InstallationController::class, 'getBasestationByInstallation']);
     Route::get('installation/{id}/basestation/configurations', [InstallationController::class, 'getBaseStationConfigsByInstallation']);
     Route::get('installation/{id}/basestation/rovers', [InstallationController::class, 'getBaseStationRoversByInstallation']);
-    Route::get('installation/{id}/basestation/roversPositions', [InstallationController::class, 'getBaseStationRoversPositionsByInstallation']);
+    Route::get('installation/{id}/basestation/roversPositions', [DeviceBaseStationController::class, 'getBaseStationWithRoversPositions']);
     Route::get('installation/{id}/basestation/rovers/{system_id}', [DeviceRoverController::class, 'getRoverBySystemId']);
 
     Route::post('updateInstallationImage/{id}', [InstallationController::class, 'updateInstallationImages']);
