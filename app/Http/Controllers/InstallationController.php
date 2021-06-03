@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use App\Models\Installation;
 use App\Models\Organization;
 use App\Models\User;
@@ -27,16 +28,35 @@ class InstallationController extends Controller
     }
 
     public function getInstallationsByUser(){
+        //\DB::disableQueryLog();
+        //DB::disableQueryLog();
+        //DB::connection()->disableQueryLog();
+        //DB::enableQueryLog();
         try {
             $user = Auth::user();
             $groups = $user->groups;
-            $installations = collect([]);
-
+            $installations =[];
             if($user->is_admin)
-                return response()->json(Installation::all(), 201); 
+                return response()->json(Installation::with(['basestation.device','basestation.configurations','basestation.rovers'])->get()->append([
+                    'device_rover_count',
+                    'battery_voltage',
+                    'available_memory',
+                    'last_configuration',
+                    'last_communication',
+                    'latitude',
+                    'longitude'
+                ]), 201); 
             foreach ($groups as $group) {
                 foreach ($group->installations as $install) {
-                    $installations->push($install);
+                    $installations->push($install->append([
+                        'device_rover_count',
+                        'battery_voltage',
+                        'available_memory',
+                        'last_configuration',
+                        'last_communication',
+                        'latitude',
+                        'longitude'
+                    ]));
                 }
             }
             return response()->json($installations, 201); 
@@ -57,30 +77,35 @@ class InstallationController extends Controller
     public function getInstallationsByOrganization($id){
         return Installation::whereHas('group.organization',function($query) use ($id){
             $query->where('id',$id);
-        })->with('group.organization')->get();
+        })->with(['group.organization','basestation'])->get()->makeVisible(['basestation']);
     }
 
     public function getInstallationsByGroup($id){
-        return Installation::whereHas('group',function($query) use ($id){
-            $query->where('id',$id);
-        })->with('group.organization')->get();
+        return Installation::where('group_id',$id)->with(['group.organization','basestation'])->get()->makeVisible(['basestation']);
     }
 
     public function getCompleteInstallations(){
-        return Installation::with(['group.organization','basestation'])->get();
+        return Installation::with(['group.organization','basestation'])->get()->makeVisible(['basestation']);
     }
 
     public function getVisibleInstallations(){
         $currentUser = Auth::user();
         if($currentUser->is_admin)
-            return response()->json(Installation::with(['group.organization','basestation'])->get(), 201); 
+            return response()->json(Installation::with(['group.organization','basestation'])->get()->makeVisible(['basestation']), 201); 
+
         return Installation::whereHas('group.organization.users',function($query) use ($currentUser){
             $query->where('id',$currentUser->id);
-        })->with(['group.organization','basestation'])->get();
+        })->with(['group.organization','basestation'])->get()->makeVisible(['basestation']);
     }
  
     function getBasestationByInstallation($id){
-        return Installation::find($id)->basestation;
+        return Installation::find($id)->basestation->append([
+            'device_rover_count',
+            'battery_voltage',
+            'available_memory',
+            'last_configuration',
+            'last_communication'
+        ]);
     }
 
     function getBaseStationConfigsByInstallation($id){
@@ -88,7 +113,7 @@ class InstallationController extends Controller
     }
 
     function getBaseStationRoversByInstallation($id){
-        return Installation::find($id)->basestation->rovers;
+        return Installation::find($id)->basestation->rovers->makeHidden(['default_position','last_communication','battery_voltage']);
     }
  
     /**
@@ -176,7 +201,13 @@ class InstallationController extends Controller
      */
     public function show(Installation $installation)
     {
-         return $installation;
+         return $installation->append([
+            'device_rover_count',
+            'battery_voltage',
+            'available_memory',
+            'last_configuration',
+            'last_communication',
+        ]);
     }
 
  

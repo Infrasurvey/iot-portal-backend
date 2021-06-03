@@ -15,18 +15,20 @@ class DeviceRover extends Model
         'system_id',
         'last_communication',
         'default_position'
-    ];
+        ];
 
     protected $hidden = [
         'device',
         'measure_rovers',
         'positions',
-        'basestation'
-    ];
+        'basestation',
+        'lastmeasurerover',
+        'lastposition'
+        ];
 
     public function device()
     {
-        return $this->morphOne('App\Models\Device', 'table');
+        return $this->morphOne('App\Models\Device', 'table')->with('lastmeasuredevice');
     }
 
     public function basestation(){
@@ -43,9 +45,19 @@ class DeviceRover extends Model
         return $this->hasMany('App\Models\Position');
     }
 
+    public function lastmeasurerover()
+    {
+        return $this->hasOne('App\Models\MeasureRover')->latestOfMany()->with('file');
+    }
+
+    public function lastposition()
+    {
+        return $this->hasOne('App\Models\Position')->latestOfMany()->with('file');
+    }
+
     public function getDefaultPositionAttribute()
     {
-        $pos = $this->positions->last();
+        $pos = $this->lastposition;
         if($pos != null){
             return $pos;
         }
@@ -64,12 +76,14 @@ class DeviceRover extends Model
     }
 
     public function getLastCommunicationAttribute(){
+
         try {
-            $position = $this->positions->last();
-            $measure = $this->measure_rovers->last();
+            $position = $this->lastposition;
+            $measure = $this->lastmeasurerover;
+
             if($position != null || $measure != null){
-                $date1 = $this->positions->last()->date;
-                $date2 = $this->measure_rovers->last()->date;
+                $date1 = $position->date;
+                $date2 = $measure->date;
                 if($date1 > $date2){
                     return $date1;
                 }
@@ -81,6 +95,6 @@ class DeviceRover extends Model
         } catch (\Throwable $th) {
             //throw $th;
         }
-        
+        return null;
     }
 }

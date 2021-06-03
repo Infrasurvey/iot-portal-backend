@@ -25,7 +25,10 @@ class DeviceBaseStationController extends Controller
 
     function getBaseStationWithRoversPositions($id)
     {
-        return DeviceBaseStation::with('rovers.positions')->get()->find($id);
+        //return DeviceBaseStation::with('rovers.positions')->get()->makeVisible(['rovers','last_configuration'])->find($id);
+        return DeviceBaseStation::whereHas('installation',function($query) use ($id){
+            $query->where('id',$id);
+        })->with(['rovers'])->get()->makeVisible(['rovers','last_configuration']);
     }
 
     function getBaseStationConfigs($id)

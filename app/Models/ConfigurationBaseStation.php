@@ -10,6 +10,7 @@ class ConfigurationBaseStation extends Model
 {
     use HasFactory;
 
+
     protected $appends = [
         'file_name',
         'configuration_date'

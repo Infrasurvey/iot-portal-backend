@@ -27,13 +27,15 @@ class Installation extends Model
     ];
 
 
-    protected $appends = [
+    /*protected $appends = [
         'device_rover_count',
         'battery_voltage',
         'available_memory',
         'last_configuration',
-        'last_communication'
-    ];
+        'last_communication',
+        'latitude',
+        'longitude'
+    ];*/
 
     /**
      * The attributes that should be hidden for arrays.
@@ -41,7 +43,7 @@ class Installation extends Model
      * @var array
      */
     protected $hidden = [
-        //'basestation',
+        'basestation',
     ];
 
     public function group(){
@@ -49,7 +51,7 @@ class Installation extends Model
     }
 
     public function basestation(){
-        return $this->belongsTo(DeviceBaseStation::class,'device_base_station_id');
+        return $this->belongsTo(DeviceBaseStation::class,'device_base_station_id')->with('lastconf');
     }
 
     public function getDeviceRoverCountAttribute()
@@ -59,7 +61,6 @@ class Installation extends Model
 
     public function getBatteryVoltageAttribute()
     {
-        //return $this->device->measure_devices->last()->battery_voltage;
         return $this->basestation->getBatteryVoltageAttribute();
     }
 
@@ -69,14 +70,31 @@ class Installation extends Model
     }
 
     public function getLastConfigurationAttribute(){
-        if($this->basestation->configurations->last() != null){
-            return $this->basestation->configurations->last()->configuration_date;
+        $last_conf = $this->basestation->last_configuration;
+        if($last_conf != null){
+            return $last_conf->configuration_date;
         }
         return null;
     }
 
     public function getLastCommunicationAttribute(){
         return $this->basestation->last_communication;
+    }
+
+    public function getLatitudeAttribute(){
+        $last_conf = $this->basestation->last_configuration;
+        if($last_conf != null){
+            return $last_conf->reference_latitude;
+        }
+        return null;
+    }
+
+    public function getLongitudeAttribute(){
+        $last_conf = $this->basestation->last_configuration;
+        if($last_conf != null){
+            return $last_conf->reference_longitude;
+        }
+        return null;
     }
 
 }

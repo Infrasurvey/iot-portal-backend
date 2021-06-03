@@ -9,7 +9,6 @@ class Position extends Model
 {
     use HasFactory;
 
-
     protected $appends = [
         'date',
     ];

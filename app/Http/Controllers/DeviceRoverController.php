@@ -21,6 +21,6 @@ class DeviceRoverController extends Controller
     function getRoverBySystemId($id,$system_id){
         return DeviceRover::whereHas('basestation.installation',function($query) use ($id){
             $query->where('id',$id);
-        })->get()->where('system_id',$system_id)->first()->makeVisible(['measure_rovers','positions','device']);
-    }
+        })->with(['measure_rovers','positions','device.measure_devices'])->get()->where('system_id',$system_id)->first()->makeHidden(['default_position','last_communication'])->makeVisible(['measure_rovers','positions','device']);
+    }//with(['measure_rovers','positions','device.measure_devices'])->
 }
