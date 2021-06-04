@@ -37,7 +37,7 @@ class DeviceRover extends Model
 
     public function measure_rovers()
     {
-        return $this->hasMany('App\Models\MeasureRover');
+        return $this->hasMany('App\Models\MeasureRover')->with('file');
     }
 
     public function positions()
