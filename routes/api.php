@@ -35,6 +35,8 @@ Route::post('logout', [RegisterController::class, 'logout']);
 
 Route::middleware('auth:sanctum')->group( function () {
     //Not working 
+    Route::get('test', [RegisterController::class, 'test']);
+
     Route::get('device/all', [DeviceController::class, 'getDevices']);
 
     Route::get('device/{id}', [DeviceController::class, 'getDevice']);
@@ -63,6 +65,9 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::get('getAdminsByOrganization/{id}', [UserController::class, 'getAdminsByOrganization']);
     Route::get('getUsersByGroup/{id}', [UserController::class, 'getUsersByGroup']);
     Route::get('getVisibleUsers', [UserController::class, 'getVisibleUsers']);
+    Route::get('availableUsersForGroup/{groupid}', [UserController::class, 'getAvailableUsers']);
+    Route::get('availableUsersForOrganization/{organizationid}', [UserController::class, 'getAvailableUsersOrga']);
+    Route::get('availableAdminsForOrganization/{organizationid}', [UserController::class, 'getAvailableAdmins']);
 
     Route::get('getGroupWithOrganization/{id}', [GroupController::class, 'getGroupWithOrganization']);
 
@@ -77,6 +82,7 @@ Route::middleware('auth:sanctum')->group( function () {
 
     Route::apiResource('installation', 'InstallationController');
     Route::get('installation/{id}/basestation', [InstallationController::class, 'getBasestationByInstallation']);
+    Route::get('installation/{id}/groupid', [InstallationController::class, 'getGroupIdByInstallation']);
     Route::get('installation/{id}/basestation/configurations', [InstallationController::class, 'getBaseStationConfigsByInstallation']);
     Route::get('installation/{id}/basestation/rovers', [InstallationController::class, 'getBaseStationRoversByInstallation']);
     Route::get('installation/{id}/basestation/roversPositions', [DeviceBaseStationController::class, 'getBaseStationWithRoversPositions']);

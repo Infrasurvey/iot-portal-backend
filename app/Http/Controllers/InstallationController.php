@@ -34,9 +34,8 @@ class InstallationController extends Controller
         //DB::enableQueryLog();
         try {
             $user = Auth::user();
-            $groups = $user->groups;
-            $installations =[];
-            if($user->is_admin)
+            
+            if($user->is_admin){
                 return response()->json(Installation::with(['basestation.device','basestation.configurations','basestation.rovers'])->get()->append([
                     'device_rover_count',
                     'battery_voltage',
@@ -46,8 +45,14 @@ class InstallationController extends Controller
                     'latitude',
                     'longitude'
                 ]), 201); 
-            foreach ($groups as $group) {
-                foreach ($group->installations as $install) {
+            }
+                
+            $groups = $user->groups;
+            $installations =collect();
+             foreach ($groups as $group) {
+                $installs = $group->installations;//->with(['basestation.device','basestation.configurations','basestation.rovers'])->get();
+
+                foreach ($installs as $install) {
                     $installations->push($install->append([
                         'device_rover_count',
                         'battery_voltage',
@@ -57,8 +62,8 @@ class InstallationController extends Controller
                         'latitude',
                         'longitude'
                     ]));
-                }
-            }
+                } 
+            } 
             return response()->json($installations, 201); 
         } catch (\Exception $e) {
             // Return Error Response
@@ -114,6 +119,10 @@ class InstallationController extends Controller
 
     function getBaseStationRoversByInstallation($id){
         return Installation::find($id)->basestation->rovers->makeHidden(['default_position','last_communication','battery_voltage']);
+    }
+
+    function getGroupIdByInstallation($id){
+        return Installation::find($id)->group_id;
     }
  
     /**

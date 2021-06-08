@@ -53,12 +53,18 @@ class RegisterController extends Controller
     {
         try {
             if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){ 
-                $user = Auth::user(); 
+                $user = Auth::user()->load(['groups.installations' => function($query) {
+                    $query->select(['id','group_id','device_base_station_id']);
+                },'organizations' => function($query) {
+                    $query->select(['id']);
+                }]); 
                 $success['token'] =  $user->createToken('APIToken')->plainTextToken; 
                 $success['name'] =  $user->name;
                 $success['lastname'] =  $user->lastname;
                 $success['email'] =  $user->email;
                 $success['groups'] =  $user->groups;
+                $success['organizations'] =  $user->organizations;
+                $success['is_admin'] =  $user->is_admin;
        
                 return $this->sendResponse($success, 'User login successfully.');
             } 
@@ -68,6 +74,13 @@ class RegisterController extends Controller
         } catch (\Throwable $th) {
             return $this->sendError('Unauthorised.', ['error'=>$th]);
         }
+        
+    }
+
+    public function test()
+    {
+        return $this->sendError('Unauthorised.', ['error'=>'Unauthorised'],401);
+            
         
     }
 
