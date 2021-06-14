@@ -31,11 +31,11 @@ use App\Http\Controllers\ConfigurationController;
 Route::post('register', [RegisterController::class, 'register']);
 Route::post('login', [RegisterController::class, 'login']);
 Route::post('logout', [RegisterController::class, 'logout']);
+Route::post('resetPassword', [RegisterController::class, 'resetPassword']);
 
 
 Route::middleware('auth:sanctum')->group( function () {
     //Not working 
-    Route::get('test', [RegisterController::class, 'test']);
 
     Route::get('device/all', [DeviceController::class, 'getDevices']);
 

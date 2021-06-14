@@ -6,6 +6,10 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Mail\PwdRecoveryEmail;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+
 use Validator;
 
 class RegisterController extends Controller
@@ -17,6 +21,9 @@ class RegisterController extends Controller
      */
     public function register(Request $request)
     {
+        $mailvalidator = Validator::make($request->all(), [
+            'email' => 'unique:users,email',
+        ]);
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'lastname' => 'required',
@@ -25,14 +32,16 @@ class RegisterController extends Controller
             'city' => 'required',
             'country' => 'required',
             'phone' => 'required',
-            'email' => 'required|email',
             'password' => 'required',
             'cpassword' => 'required|same:password',
             'language' => 'required',
         ]);
 
+        if($mailvalidator->fails()){
+            return $this->sendError('Email already exists.', $validator->errors());       
+        }
         if($validator->fails()){
-            return $this->sendError('Validation Error.', $validator->errors());       
+            return $this->sendError('Validation Error. Please check your informations', $validator->errors());       
         }
    
         $input = $request->all();
@@ -77,10 +86,27 @@ class RegisterController extends Controller
         
     }
 
-    public function test()
+    public function resetPassword(Request $request)
     {
-        return $this->sendError('Unauthorised.', ['error'=>'Unauthorised'],401);
-            
+        $mailvalidator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ]);
+        if($mailvalidator->fails()){
+            return $this->sendError('Email not valid', $validator->errors());       
+        }
+        $email = $request->email;
+        $users = User::where('email',$email)->get();
+        if($users->count()==1){
+            $user = $users[0];
+            $newpassword = Str::random(12);
+            $user->password = Hash::make($newpassword);
+            $user->save();
+
+            $data = ['password' => $newpassword];
+            Mail::to($email)->send(new PwdRecoveryEmail($data));
+            return $this->sendResponse('true', 'Email sent successfully.');
+        }
+        return $this->sendError('Email not found', 500);
         
     }
 
