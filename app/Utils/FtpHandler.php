@@ -79,6 +79,7 @@ class FtpHandler
     {
         try {
             $filePath = "/data/Geomon/" . $filePath;
+            
             $file = fopen("temp.txt", "w");
             
             if (ftp_fget($this->ftp, $file, $filePath, FTP_ASCII) == FALSE)

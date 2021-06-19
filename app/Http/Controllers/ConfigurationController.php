@@ -32,9 +32,12 @@ class ConfigurationController extends Controller
         $basestation = Installation::find($id)->basestation;
         $ftpHandler = new FtpHandler;
         $response = [];
+        
         if ( $ftpHandler->connect()) {
+            
             $date = $ftpHandler->getLastModifiedDate('test/GM_BASE_STATION.ini');
             $response['date'] = $date;
+            
             //$file = $ftpHandler->getFile($basestation->name.'/170721_091516_GM_BASE_STATION.ini');
             $file = $ftpHandler->getFile('test/GM_BASE_STATION.ini');
             $ftpHandler->disconnect();
