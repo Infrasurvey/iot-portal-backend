@@ -26,23 +26,23 @@ class UserController extends Controller
      */
     public function usersWithGroups()
     {
-        return User::where('id','!=',1)->with(['groups','organizations'])->get();
+        return User::where('is_admin',false)->with(['groups','organizations'])->get();
     }
 
     public function getUsersByOrganization($id){
-        return User::where('id','!=',1)->whereHas('groups.organization',function($query) use ($id){
+        return User::where('is_admin',false)->whereHas('groups.organization',function($query) use ($id){
             $query->where('id',$id);
         })->with(['groups','organizations'])->get();
     }
 
     public function getAdminsByOrganization($id){
-        return User::where('id','!=',1)->whereHas('organizations',function($query) use ($id){
+        return User::where('is_admin',false)->whereHas('organizations',function($query) use ($id){
             $query->where('id',$id);
         })->with(['groups','organizations'])->get();
     }
 
     public function getUsersByGroup($id){
-        return User::where('id','!=',1)->whereHas('groups',function($query) use ($id){
+        return User::where('is_admin',false)->whereHas('groups',function($query) use ($id){
             $query->where('id',$id);
         })->with(['groups','organizations'])->get();
     }
@@ -50,8 +50,8 @@ class UserController extends Controller
     public function getVisibleUsers(){
         $currentUser = Auth::user();
         if($currentUser->is_admin)
-            return response()->json(User::where('id','!=',1)->with(['organizations','groups'])->get(), 201);
-        return User::where('id','!=',1)->whereHas('groups.organization.users',function($query) use ($currentUser){
+            return response()->json(User::where('is_admin',false)->with(['organizations','groups'])->get(), 201);
+        return User::where('is_admin',false)->whereHas('groups.organization.users',function($query) use ($currentUser){
             $query->where('id',$currentUser->id);
         })->with(["organizations" => function($q) use ($currentUser){
             $q->whereHas('users',function($query) use ($currentUser){
@@ -65,19 +65,19 @@ class UserController extends Controller
     }
 
     public function getAvailableUsers($groupid){
-        return User::where('id','!=',1)->whereDoesntHave('groups', function($query) use ($groupid){
+        return User::where('is_admin',false)->whereDoesntHave('groups', function($query) use ($groupid){
             $query->where('id',$groupid);
         })->get();
     }
 
     public function getAvailableAdmins($organizationid){
-        return User::where('id','!=',1)->whereDoesntHave('organizations', function($query) use ($organizationid){
+        return User::where('is_admin',false)->whereDoesntHave('organizations', function($query) use ($organizationid){
             $query->where('id',$organizationid);
         })->get();
     }
 
     public function getAvailableUsersOrga($organizationid){
-        return User::where('id','!=',1)->whereDoesntHave('groups.organization', function($query) use ($organizationid){
+        return User::where('is_admin',false)->whereDoesntHave('groups.organization', function($query) use ($organizationid){
             $query->where('id',$organizationid);
         })->get();
     }
