@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
             'language' => 'English',
             'email' => 'admin@geomon.ch',
             'is_admin' => true,
-            'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
+            'password' => '$2y$10$y4wzDc/ezkq1Nb5QsUGhpO9skPbBu6H.Ne1ZO2H6HuRPzl0EPoVKq', // password
         ]);
         //-------------------Organization--------------------------------------
         \App\Models\Organization::factory()->create([
