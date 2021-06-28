@@ -16,11 +16,11 @@ class DatabaseSeeder extends Seeder
         \App\Models\User::factory()->create([
             'name' => 'admin',
             'lastname' => '',
-            'address' => 'Rue du Moulin',
+            'address' => 'Route de Cheseaux 1',
             'zip' => '1400',
             'city' => 'Yverdon-les-Bains',
             'country' => 'CH',
-            'phone' => '089 934 34 34',
+            'phone' => '024 557 63 15',
             'language' => 'English',
             'email' => 'admin@geomon.ch',
             'is_admin' => true,
