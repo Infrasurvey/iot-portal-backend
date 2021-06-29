@@ -29,9 +29,9 @@ class PwdRecoveryEmail extends Mailable
      */
     public function build()
     {
-        $address = 'ninjea23@gmail.com';
+        $address = 'geomon.iot@gmail.com';
         $subject = 'Password reset - Geomon IoT';
-        $name = 'noreply geomon';
+        $name = 'Geomon';
 
         return $this->view('mail')
                     ->from($address, $name)
