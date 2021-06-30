@@ -26,17 +26,6 @@ class Installation extends Model
         'last_human_intervention'
     ];
 
-
-    /*protected $appends = [
-        'device_rover_count',
-        'battery_voltage',
-        'available_memory',
-        'last_configuration',
-        'last_communication',
-        'latitude',
-        'longitude'
-    ];*/
-
     /**
      * The attributes that should be hidden for arrays.
      *
@@ -96,5 +85,4 @@ class Installation extends Model
         }
         return null;
     }
-
 }

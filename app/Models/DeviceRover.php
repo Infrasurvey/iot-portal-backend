@@ -76,7 +76,6 @@ class DeviceRover extends Model
     }
 
     public function getLastCommunicationAttribute(){
-
         try {
             $position = $this->lastposition;
             $measure = $this->lastmeasurerover;
@@ -89,9 +88,7 @@ class DeviceRover extends Model
                 }
             return $date2;
         }
-
         return null;
-        
         } catch (\Throwable $th) {
             //throw $th;
         }

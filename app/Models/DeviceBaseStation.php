@@ -9,14 +9,6 @@ use App\Models\Installation;
 class DeviceBaseStation extends Model
 {
     use HasFactory;
-    
-    /* protected $appends = [
-        'device_rover_count',
-        'battery_voltage',
-        'available_memory',
-        'last_configuration',
-        'last_communication'
-    ]; */
 
     /**
      * The attributes that should be hidden for arrays.
@@ -57,17 +49,7 @@ class DeviceBaseStation extends Model
     public function getLastConfigurationAttribute()
     {
         return $this->lastconf;
-        //return $this->lastconfiguration;
-        /* $conf = $this->configurations->last();
-        if($conf != null){
-            return $conf->with('file');
-        }
-        else{
-            return null;
-        } */
-
     }
-
 
     public function getDeviceRoverCountAttribute()
     {
