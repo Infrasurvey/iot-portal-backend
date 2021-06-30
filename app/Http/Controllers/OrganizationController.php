@@ -28,6 +28,9 @@ class OrganizationController extends Controller
         return Organization::with('groups')->get();
     }
 
+    /**
+     * return list of organizations depending on current auth user's group
+     */
     public function getCurrentVisibleOrganizations(){
         $currentUser = Auth::user();
         if($currentUser->is_admin)
@@ -37,11 +40,14 @@ class OrganizationController extends Controller
         })->with('groups')->get();
     }
 
+    /**
+     * return list of groups by organization
+     */
     public function getGroupsByOrganization($id){
         return Organization::find($id)->groups;
     }
 
-         /**
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response

@@ -27,11 +27,10 @@ class InstallationController extends Controller
         return Installation::all();
     }
 
+    /**
+     * return list of installations depending on current auth user
+     */
     public function getInstallationsByUser(){
-        //\DB::disableQueryLog();
-        //DB::disableQueryLog();
-        //DB::connection()->disableQueryLog();
-        //DB::enableQueryLog();
         try {
             $user = Auth::user();
             
@@ -50,8 +49,7 @@ class InstallationController extends Controller
             $groups = $user->groups;
             $installations =collect();
              foreach ($groups as $group) {
-                $installs = $group->installations;//->with(['basestation.device','basestation.configurations','basestation.rovers'])->get();
-
+                $installs = $group->installations;
                 foreach ($installs as $install) {
                     $installations->push($install->append([
                         'device_rover_count',
@@ -71,38 +69,55 @@ class InstallationController extends Controller
                 'message' => $e
             ], 500);
         } 
-        
     }
+
+    /**
+     * return list of users depending on an installation
+     */
     public function getUsersByInstallation($id){
         return User::whereHas('groups.installations',function($query) use ($id){
             $query->where('id',$id);
         })->get();
     }
 
+    /**
+     * return list of installation depending on an organization
+     */
     public function getInstallationsByOrganization($id){
         return Installation::whereHas('group.organization',function($query) use ($id){
             $query->where('id',$id);
         })->with(['group.organization','basestation'])->get()->makeVisible(['basestation']);
     }
 
+    /**
+     * return list of installation by group
+     */
     public function getInstallationsByGroup($id){
         return Installation::where('group_id',$id)->with(['group.organization','basestation'])->get()->makeVisible(['basestation']);
     }
 
+    /**
+     * return list of all installations with groups, organizations and base station that are linked with
+     */
     public function getCompleteInstallations(){
         return Installation::with(['group.organization','basestation'])->get()->makeVisible(['basestation']);
     }
 
+    /**
+     * return list of installations depending on current auth user's groups and organizations
+     */
     public function getVisibleInstallations(){
         $currentUser = Auth::user();
         if($currentUser->is_admin)
             return response()->json(Installation::with(['group.organization','basestation'])->get()->makeVisible(['basestation']), 201); 
-
         return Installation::whereHas('group.organization.users',function($query) use ($currentUser){
             $query->where('id',$currentUser->id);
         })->with(['group.organization','basestation'])->get()->makeVisible(['basestation']);
     }
- 
+
+    /**
+     * return single base station which is linked to a specific installation
+     */
     function getBasestationByInstallation($id){
         return Installation::find($id)->basestation->append([
             'device_rover_count',
@@ -113,14 +128,23 @@ class InstallationController extends Controller
         ]);
     }
 
+    /**
+     * return base station configuration by installation
+     */
     function getBaseStationConfigsByInstallation($id){
         return Installation::find($id)->basestation->configurations;
     }
 
+    /**
+     * return base station's rovers by installation
+     */
     function getBaseStationRoversByInstallation($id){
         return Installation::find($id)->basestation->rovers->makeHidden(['default_position','last_communication','battery_voltage']);
     }
 
+    /**
+     * return group_id of installation
+     */
     function getGroupIdByInstallation($id){
         return Installation::find($id)->group_id;
     }
@@ -174,6 +198,9 @@ class InstallationController extends Controller
     }
 
 
+    /**
+     * Update installation image
+     */
     public function updateInstallationImages(Request $request,$id){
         try {
             $installation = Installation::find($id);
@@ -230,9 +257,7 @@ class InstallationController extends Controller
     public function update(Request $request, Installation $installation)
     {
         $installation->update($request->only(['group_id','device_base_station_id','name','image_path','installation_date','last_human_,intervention']));
-
         return $installation;  
-         
     }
  
  
@@ -248,8 +273,6 @@ class InstallationController extends Controller
             Storage::delete('public/images/'.$installation->image_path);
         }
         $installation->delete();
- 
         return response()->json(null, 204); 
-         
     }
 }

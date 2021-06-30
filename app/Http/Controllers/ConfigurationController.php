@@ -35,11 +35,11 @@ class ConfigurationController extends Controller
         
         if ( $ftpHandler->connect()) {
             
-            $date = $ftpHandler->getLastModifiedDate('test/GM_BASE_STATION.ini');
+            $date = $ftpHandler->getLastModifiedDate($basestation->name.'/GM_BASE_STATION.ini');
             $response['date'] = $date;
             
-            //$file = $ftpHandler->getFile($basestation->name.'/170721_091516_GM_BASE_STATION.ini');
-            $file = $ftpHandler->getFile('test/GM_BASE_STATION.ini');
+            $file = $ftpHandler->getFile($basestation->name.'/GM_BASE_STATION.ini');
+            //$file = $ftpHandler->getFile('test/GM_BASE_STATION.ini');
             $ftpHandler->disconnect();
             if($file != null){
                 $response['configuration'] = $this->parseFile($file);
@@ -58,8 +58,8 @@ class ConfigurationController extends Controller
         $basestation = Installation::find($id)->basestation;
         $ftpHandler = new FtpHandler;
         if ( $ftpHandler->connect()) {
-            //$file = $ftpHandler->removeFile($basestation->name.'/170721_091516_GM_BASE_STATION.ini');
-            $status = $ftpHandler->removeFile('test/GM_BASE_STATION.ini');
+            $status = $ftpHandler->removeFile($basestation->name.'/GM_BASE_STATION.ini');
+            //$status = $ftpHandler->removeFile('test/GM_BASE_STATION.ini');
             $ftpHandler->disconnect();
             if($status)
                 return response()->json('File succesfully deleted', 201);
@@ -74,8 +74,8 @@ class ConfigurationController extends Controller
         $file = $request->file('configuration');
         $ftpHandler = new FtpHandler;
         if ( $ftpHandler->connect()) {
-            //$file = $ftpHandler->saveFile($basestation->name.'/GM_BASE_STATION.ini');
-            $status = $ftpHandler->saveFile('test/GM_BASE_STATION.ini',$file);
+            $status = $ftpHandler->saveFile($basestation->name.'/GM_BASE_STATION.ini',$file);
+            //$status = $ftpHandler->saveFile('test/GM_BASE_STATION.ini',$file);
             $ftpHandler->disconnect();
             if($status)
                 return response()->json('Configuration file successfully applied', 201);

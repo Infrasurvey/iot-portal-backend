@@ -20,7 +20,7 @@ class UserController extends Controller
 
 
     /**
-     * Display a listing of users with their groups.
+     * Display a listing of users with their groups. Without global admin users
      *
      * @return \Illuminate\Http\Response
      */
@@ -29,24 +29,36 @@ class UserController extends Controller
         return User::where('is_admin',false)->with(['groups','organizations'])->get();
     }
 
+    /**
+     * return list of users by organization without global admin users
+     */
     public function getUsersByOrganization($id){
         return User::where('is_admin',false)->whereHas('groups.organization',function($query) use ($id){
             $query->where('id',$id);
         })->with(['groups','organizations'])->get();
     }
 
+    /**
+     * return list of organization admins by organization without global admin users
+     */
     public function getAdminsByOrganization($id){
         return User::where('is_admin',false)->whereHas('organizations',function($query) use ($id){
             $query->where('id',$id);
         })->with(['groups','organizations'])->get();
     }
 
+    /**
+     * return list of users by group without global admin users
+     */
     public function getUsersByGroup($id){
         return User::where('is_admin',false)->whereHas('groups',function($query) use ($id){
             $query->where('id',$id);
         })->with(['groups','organizations'])->get();
     }
 
+    /**
+     * return list of users depending on current auth user without global admin users
+     */
     public function getVisibleUsers(){
         $currentUser = Auth::user();
         if($currentUser->is_admin)
@@ -64,18 +76,27 @@ class UserController extends Controller
         }])->get();
     }
 
+    /**
+     * return list of users that aren't already in groups
+     */
     public function getAvailableUsers($groupid){
         return User::where('is_admin',false)->whereDoesntHave('groups', function($query) use ($groupid){
             $query->where('id',$groupid);
         })->get();
     }
 
+    /**
+     * return list of users that aren't already organization admin
+     */
     public function getAvailableAdmins($organizationid){
         return User::where('is_admin',false)->whereDoesntHave('organizations', function($query) use ($organizationid){
             $query->where('id',$organizationid);
         })->get();
     }
 
+    /**
+     * return list of users that aren't already in organization
+     */
     public function getAvailableUsersOrga($organizationid){
         return User::where('is_admin',false)->whereDoesntHave('groups.organization', function($query) use ($organizationid){
             $query->where('id',$organizationid);

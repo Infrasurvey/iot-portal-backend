@@ -15,7 +15,7 @@ use Validator;
 class RegisterController extends Controller
 {
     /**
-     * Register api
+     * Create a new user and return user's info and token
      *
      * @return \Illuminate\Http\Response
      */
@@ -56,6 +56,7 @@ class RegisterController extends Controller
      /**
      * Login api
      *
+     * Log In given user and return user info and token
      * @return \Illuminate\Http\Response
      */
     public function login(Request $request)
@@ -86,6 +87,10 @@ class RegisterController extends Controller
         
     }
 
+    /**
+     * Reset password for a given email
+     * send a new password to email
+     */
     public function resetPassword(Request $request)
     {
         $mailvalidator = Validator::make($request->all(), [
@@ -146,6 +151,9 @@ class RegisterController extends Controller
         
     }
 
+    /**
+     * Log out the current auth user
+     */
     public function logout(Request $request){
         Auth::logout();
     }

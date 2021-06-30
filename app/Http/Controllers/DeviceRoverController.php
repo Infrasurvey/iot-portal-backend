@@ -11,16 +11,25 @@ use App\Models\MeasureDevice;
 
 class DeviceRoverController extends Controller
 {
+    /**
+     * return list of all existing rovers.
+     */
     function getDeviceRovers()
     {
         return DeviceRover::all();
     }
 
+    /**
+     * return specific rover based on id.
+     */
     function getDeviceRover($id)
     {
         return DeviceRover::find($id);
     }
 
+    /**
+     * return specific rovers by system_id with rover's positions, rover's measures and rover's measure device.
+     */
     function getRoverBySystemId($id,$system_id){
         
         $rover = DeviceRover::whereHas('basestation.installation',function($query) use ($id){
@@ -52,12 +61,6 @@ class DeviceRoverController extends Controller
         $rover['r_measure_rovers'] = $measurerovers;
         $rover['r_measure_devices'] = $measuredevices;
         return $rover;
-
-        /* return DeviceRover::whereHas('basestation.installation',function($query) use ($id){
-            $query->where('id',$id);
-        })->with(['positions'=> function($q){
-            return $q->chunk(1000,function ($measurerovers) {});
-        }])->get()->where('system_id',$system_id)->first()->makeHidden(['default_position'])->makeVisible(['measure_rovers','positions','device']); */
-    }//with(['measure_rovers','positions','device.measure_devices'])->
+    }
 }
 

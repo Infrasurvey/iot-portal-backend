@@ -20,6 +20,9 @@ class GroupController extends Controller
     
     }
 
+    /**
+     * return list of groups that are included in organizations that current auth user is in.
+     */
     public function getCurrentVisibleGroups(){
         $currentUser = Auth::user();
         if($currentUser->is_admin)
@@ -29,14 +32,13 @@ class GroupController extends Controller
         })->get();
     }
 
+    /**
+     * return specific group by id with its organization.
+     */
     public function getGroupWithOrganization($id){
-
         return Group::with('organization')->get()->find($id);
     }
 
-    
- 
- 
     /**
      * Store a newly created resource in storage.
      *
@@ -57,9 +59,7 @@ class GroupController extends Controller
                 'message' => $e
             ], 500);
         }   
-         
     }
- 
  
     /**
      * Display the specified resource.
@@ -70,9 +70,7 @@ class GroupController extends Controller
     public function show(Group $group)
     {
         return $group;
-         
     }
- 
  
     /**
      * Update the specified resource in storage.
@@ -84,11 +82,8 @@ class GroupController extends Controller
     public function update(Request $request, Group $group)
     {
         $group->update($request->only(['organization_id','name']));
-
         return $group;  
-         
     }
- 
  
     /**
      * Remove the specified resource from storage.
@@ -99,8 +94,6 @@ class GroupController extends Controller
     public function destroy(Group $group)
     {
         $group->delete();
- 
         return response()->json(null, 204); 
-         
     }
 }

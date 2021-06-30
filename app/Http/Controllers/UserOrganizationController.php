@@ -122,6 +122,10 @@ class UserOrganizationController extends Controller
         }            
     }
 
+  /**
+     * Add user to a specific organization
+     *
+     */
     public function addUserOrganizations(Request $request)
     {
         try {

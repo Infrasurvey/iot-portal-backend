@@ -121,6 +121,10 @@ class UserGroupController extends Controller
         }            
     }
 
+    /**
+     * Add a user (by a given ID) to a specific group
+     *
+     */
     public function addUserGroups(Request $request)
     {
         try {
