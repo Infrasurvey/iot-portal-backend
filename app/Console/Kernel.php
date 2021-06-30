@@ -24,14 +24,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('php artisan geomon:fetch_ftp')->withoutOverlapping()->dailyAt('01:00')->onSuccess(function () {
-             // The task succeeded...
-          
-        })
-        ->onFailure(function () {
-            // The task failed...
-         
-        });
+        $schedule->command('geomon:fetch_ftp')->withoutOverlapping()->dailyAt('01:00');
     }
 
     /**
