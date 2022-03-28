@@ -24,7 +24,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Every day at one o'clock this comand fetch data from the ftp server and saves only new data to the database
+        $schedule->command('geomon:fetch_ftp')->withoutOverlapping()->dailyAt('01:00');
     }
 
     /**

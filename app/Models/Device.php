@@ -10,16 +10,29 @@ class Device extends Model
     use HasFactory;
     
     protected $appends = [
-        'last_battery_voltage'
+        'battery_voltage'
     ];
+
+    protected $hidden = [
+        'lastmeasuredevice',
+        ];
 
     public function measure_devices()
     {
         return $this->hasMany('App\Models\MeasureDevice');
     }
 
-    public function getLastBatteryVoltageAttribute()
+    public function lastmeasuredevice()
     {
-        return $this->measure_devices->last()->battery_voltage;
+        return $this->hasOne('App\Models\MeasureDevice')->latestOfMany()->with('file');
+    }
+
+    public function getBatteryVoltageAttribute()
+    {
+        $measure =$this->lastmeasuredevice;
+        if($measure != null){
+            return $measure->battery_voltage;
+        }
+        return null;
     }
 }

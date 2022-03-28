@@ -23,9 +23,16 @@ class UserFactory extends Factory
     public function definition()
     {
         return [
-            'name' => $this->faker->name,
-            'email' => $this->faker->unique()->safeEmail,
-            'email_verified_at' => now(),
+            'name' => 'admin',
+            'lastname' => 'admin lastname',
+            'address' => 'Rue du Moulin',
+            'zip' => '1400',
+            'city' => 'Yverdon-les-Bains',
+            'country' => 'CH',
+            'phone' => '089 934 34 34',
+            'language' => 'English',
+            'email' => 'admin@geomon.ch',
+            'is_admin' => true,
             'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
             'remember_token' => Str::random(10),
         ];
