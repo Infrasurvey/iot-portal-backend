@@ -103,10 +103,10 @@ class DeviceBaseStationController extends Controller
             }
 
             // Device measures
-            foreach (MeasureDevice::where('device_id', Device::where('table_id', $deviceRover->id)->where('table_type', 'device_rovers')->first()->id)->cursor() as $deviceMeasure)
+            foreach (MeasureDevice::where('device_id', Device::where('table_id', $deviceRover->id)->where('table_type', 'device_rovers')->first()->id)->cursor() as $measureDevice)
             {
-                MeasureDevice::where('id', $deviceMeasure->id)->delete();
-                array_push($fileIds, File::where('id', $deviceMeasure->file_id)->first()->id);
+                MeasureDevice::where('id', $measureDevice->id)->delete();
+                array_push($fileIds, File::where('id', $measureDevice->file_id)->first()->id);
             }
 
             // Delete rover
@@ -115,16 +115,11 @@ class DeviceBaseStationController extends Controller
             // Delete device
             Device::where('table_id', $deviceRover->id)->where('table_type', 'device_rovers')->delete();
         }
-
-        // Delete all device measures
-        foreach (Device::where('table_id', $id)->where('table_type', 'device_base_stations')->cursor() as $device)
-        {
             // Delete all device measures and device measure files
-            foreach (MeasureDevice::where('device_id', $device->id)->cursor() as $measureDevice)
+        foreach (MeasureDevice::where('device_id', Device::where('table_id', $id)->where('table_type', 'device_base_stations')->first()->id)->cursor() as $measureDevice)
             {
                 MeasureDevice::where('id', $measureDevice->id)->delete();
                 array_push($fileIds, File::where('id', $measureDevice->file_id)->first()->id);
-            }
         }
 
         // Delete device (linked to base station)
