@@ -42,13 +42,13 @@ Route::middleware('auth:sanctum')->group( function () {
 
     // Device -> Base station
     Route::get('device/basestation/all', [DeviceBaseStationController::class, 'getAll']);
+    Route::delete('device/basestation/all', [DeviceBaseStationController::class, 'deleteAll']);
     Route::get('device/basestation/available', [DeviceBaseStationController::class, 'getAvailable']);
     Route::get('device/basestation/{id}', [DeviceBaseStationController::class, 'getSingle']);
+    Route::delete('device/basestation/{id}', [DeviceBaseStationController::class, 'deleteSingle']);
     Route::get('device/basestation/{id}/configurations', [DeviceBaseStationController::class, 'getConfigurations']);
     Route::get('device/basestation/{id}/rovers', [DeviceBaseStationController::class, 'getRovers']);
     Route::get('device/basestation/{id}/roversPositions', [DeviceBaseStationController::class, 'getRoversPositions']);
-    Route::delete('device/basestation/all', [DeviceBaseStationController::class, 'deleteAll']);
-    Route::delete('device/basestation/{id}', [DeviceBaseStationController::class, 'deleteSingle']);
 
     // Device -> Rover
     Route::get('device/rover/all', [DeviceRoverController::class, 'getDeviceRovers']);

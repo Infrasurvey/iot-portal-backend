@@ -65,7 +65,19 @@ class DeviceBaseStationController extends Controller
     }
 
     /**
-     * @brief Delete a single base station
+     * @brief Delete all base stations and related data
+     */
+    function deleteAll()
+    {
+        $deviceBaseStations = DeviceBaseStation::all();
+        foreach($deviceBaseStations as $deviceBaseStation)
+        {
+            $this->deleteSingle($deviceBaseStation->id);
+        }
+    }
+
+    /**
+     * @brief Delete a single base station and related data
      */
     function deleteSingle($id)
     {
