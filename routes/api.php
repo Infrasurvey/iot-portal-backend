@@ -35,25 +35,26 @@ Route::post('resetPassword', [RegisterController::class, 'resetPassword']);
 
 
 Route::middleware('auth:sanctum')->group( function () {
-    //Not working 
 
+    // Device 
     Route::get('device/all', [DeviceController::class, 'getDevices']);
-
     Route::get('device/{id}', [DeviceController::class, 'getDevice']);
 
-    Route::get('device/basestation/all', [DeviceBaseStationController::class, 'getDeviceBaseStations']);
-    Route::get('device/basestation/available', [DeviceBaseStationController::class, 'getAvailableBasestations']);
+    // Device -> Base station
+    Route::get('device/basestation/all', [DeviceBaseStationController::class, 'getAll']);
+    Route::get('device/basestation/available', [DeviceBaseStationController::class, 'getAvailable']);
+    Route::get('device/basestation/{id}', [DeviceBaseStationController::class, 'getSingle']);
+    Route::get('device/basestation/{id}/configurations', [DeviceBaseStationController::class, 'getConfigurations']);
+    Route::get('device/basestation/{id}/rovers', [DeviceBaseStationController::class, 'getRovers']);
+    Route::get('device/basestation/{id}/roversPositions', [DeviceBaseStationController::class, 'getRoversPositions']);
+    Route::delete('device/basestation/all', [DeviceBaseStationController::class, 'deleteAll']);
+    Route::delete('device/basestation/{id}', [DeviceBaseStationController::class, 'deleteSingle']);
 
-    //Work using system_id as PK
-    Route::get('device/basestation/{id}', [DeviceBaseStationController::class, 'getDeviceBaseStation']);
-    Route::get('device/basestation/{id}/configurations', [DeviceBaseStationController::class, 'getBaseStationConfigs']);
-    Route::get('device/basestation/{id}/rovers', [DeviceBaseStationController::class, 'getBaseStationWithRovers']);
-    Route::get('device/basestation/{id}/roversPositions', [DeviceBaseStationController::class, 'getBaseStationWithRoversPositions']);
-
-
+    // Device -> Rover
     Route::get('device/rover/all', [DeviceRoverController::class, 'getDeviceRovers']);
     Route::get('device/rover/{id}', [DeviceRoverController::class, 'getDeviceRover']);
     
+
     Route::apiResource('user', 'UserController');
     Route::get('usersWithGroups', [UserController::class, 'usersWithGroups']);
     Route::post('updateUserGroups', [UserGroupController::class, 'updateUserGroupRelations']);
