@@ -18,7 +18,8 @@ class FetchDeviceDataFtp extends FetchDeviceData
      *
      * @var string
      */
-    protected $signature = 'geomon:fetch_ftp';
+    protected $signature = 'geomon:fetch_ftp
+                            {name? : The name of the base station to update}';
 
     /**
      * The console command description.
@@ -74,14 +75,49 @@ class FetchDeviceDataFtp extends FetchDeviceData
     }
 
     /**
-     * See FetchDeviceData.php
+     * @brief Returns file paths
+     * @param dirPath Current directory where to return all file paths.
+     * @return paths All file paths.
      */
-    protected function listDir($dirPath)
+    protected function listFiles($dirPath)
+    {
+        return $this->getPaths($dirPath, '-');
+    }
+
+    /**
+     * @brief Returns directory paths.
+     * @param dirPath Current directory where to return all directory paths.
+     * @return paths All directory paths.
+     */
+    protected function listFolders($dirPath)
+    {
+        return $this->getPaths($dirPath, 'd');
+    }
+
+    /**
+     * @brief Returns file or directory.
+     * @param dirPath Current directory where to return all file/directory paths.
+     * @param character File ('-') or Directory ('d') character.
+     * @return paths All file/directory paths.
+     */
+    private function getPaths($dirPath, $character)
     {
         $dirPath = "/data/Geomon/" . $dirPath;
         $paths = ftp_nlist($this->ftp, $dirPath);
+        $metas = ftp_rawlist($this->ftp, $dirPath);
+        
+        // Remove each item not being a file
         sort($paths);
+        foreach($metas as $y => $meta)
+        {
+            if ($meta[0] != $character)
+            {
+                unset($paths[$y]);
+            }
+        }
 
+        $paths = array_values($paths);
+        
         // Remove "/data/Geomon/" of each path
         foreach($paths as $key => $path)
         {
@@ -135,6 +171,14 @@ class FetchDeviceDataFtp extends FetchDeviceData
      */
     public function handle()
     {
-        $this->fetch();
+        $baseStationId = $this->argument('name');
+        if ($baseStationId == null)
+        {
+            $this->fetchAll();
+        }
+        else
+        {
+            $this->fetch($baseStationId);
+        }
     }
 }

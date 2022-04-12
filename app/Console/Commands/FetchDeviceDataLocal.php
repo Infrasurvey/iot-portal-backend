@@ -40,7 +40,29 @@ class FetchDeviceDataLocal extends FetchDeviceData
     /**
      * See FetchDeviceData.php
      */
-    protected function listDir($dirPath)
+    protected function listFiles($dirPath)
+    {
+        $fullPath = "/srv/ImportGeomon/" . $dirPath;
+        $paths = scandir($fullPath, SCANDIR_SORT_ASCENDING);
+        if ($dirPath == "")
+        {
+            return $paths;
+        }
+        else
+        {
+            foreach($paths as $i => $path)
+            {
+                $paths[$i] = $dirPath . "/" . $path;
+            }
+    
+            return $paths;
+        }
+    }
+
+    /**
+     * See FetchDeviceData.php
+     */
+    protected function listFolders($dirPath)
     {
         $fullPath = "/srv/ImportGeomon/" . $dirPath;
         $paths = scandir($fullPath, SCANDIR_SORT_ASCENDING);

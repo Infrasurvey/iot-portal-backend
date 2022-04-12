@@ -59,22 +59,6 @@ class FtpHandler
         return TRUE;
     }
 
-    function listDir($dirPath)
-    {
-        $dirPath = "/data/Geomon/" . $dirPath;
-        $paths = ftp_nlist($this->ftp, $dirPath);
-        sort($paths);
-
-        // Remove "/data/Geomon/" of each path
-        foreach($paths as $key => $path)
-        {
-            $paths[$key] = substr($path, strlen("/data/Geomon/"));
-        }
-
-        return $paths;
-    }
-
-
     function getFile($filePath)
     {
         try {

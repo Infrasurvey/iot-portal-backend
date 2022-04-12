@@ -138,43 +138,50 @@ abstract class FetchDeviceData extends Command
     }
 
     /**
-     * Connect to folder
+     * @brief Connnect to remote folder
      */
     abstract protected function connect();
 
     /**
-     * Connect to folder
+     * @brief List all paths in current dirPath
+     * @param dirPath 
      */
-    abstract protected function listDir($dirPath);
+    abstract protected function listFiles($dirPath);
 
     /**
-     * Connect to folder
+     * @brief List all folder paths in current directory
+     * @param dirPath 
+     */
+    abstract protected function listFolders($dirPath);
+
+    /**
+     * @brief 
      */
     abstract protected function getFile($filePath);
 
     /**
-     * Connect to folder
+     * @brief 
      */
     abstract protected function getFileModificationTime($filePath);
 
     /**
-     * Connect to folder
+     * @brief Disconnect from remote folder
      */
     abstract protected function disconnect();
 
     /**
-     * Fetch data 
+     * @brief List all base station names present in the Geomon/data folder
      */
-    protected function fetch()
+    protected function getListOfBaseStationNames()
     {
         // Connect to the remote file system
         if ($this->connect() == FALSE)
         {
-            return;
+            return null;
         }
 
         // Get all paths of all Geomon Base Stations in root folder.
-        $baseStationPaths = $this->listDir("");
+        $baseStationPaths = $this->listFolders("");
 
         // Find all the base stations present in the root the folder.
         $baseStations = array();
@@ -194,534 +201,591 @@ abstract class FetchDeviceData extends Command
                 $baseStations[] = $baseStationPath;
             }
         }
+    
+        // Close the connection with the remote file system
+        $this->disconnect();
+        return $baseStations;
+    }
 
-        // For each base station
-        foreach ($baseStations as $baseStation)
+    /**
+     * @brief Save/update file in database.
+     * @param type File extension type.
+     * @param version File version.
+     * @param path File path.
+     * @return File File model.
+     */
+    protected function saveFile($type, $version, $path)
+    {
+        $creationTime = "2000-01-01 01:00:00"; // default
+        $name = explode("/", $path);
+        $name = end($name);
+        switch($type)
         {
-            // Get the base station id
-            $baseStation_id = intval(substr($baseStation, -4));
-            echo("Processing Base Station $baseStation_id\n");
-
-            // Get all the measure paths concerning this base station
-            $paths = $this->listDir($baseStation);
-
-            //     ___           __ _                    _   _                 __      _      _ 
-            //    / __|___ _ _  / _(_)__ _ _  _ _ _ __ _| |_(_)___ _ _  ___  __\ \    (_)_ _ (_)
-            //   | (__/ _ \ ' \|  _| / _` | || | '_/ _` |  _| / _ \ ' \(_-< |___> >  _| | ' \| |
-            //    \___\___/_||_|_| |_\__, |\_,_|_| \__,_|\__|_\___/_||_/__/    /_/  (_)_|_||_|_|
-            //                       |___/                                                      
-
-            unset($iniPaths);
-            $iniPaths = array();
-            foreach($paths as $path)
-            {
-                if (strstr($path, ".ini") != FALSE)
+            case "ini":
+                if (($name[0] >= '0') && ($name[0] <= '9'))
                 {
-                    $iniPaths[] = $path;
+                    $creationTime = "20" . $name[0] . $name[1]  . "-" . $name[2]  . $name[3]  . "-" .
+                                           $name[4] . $name[5]  . " " . $name[7]  . $name[8]  . ":" .
+                                           $name[9] . $name[10] . ":" . $name[11] . $name[12];
+                }
+                else
+                {
+                    $creationTime = $this->getFileModificationTime($path);
+                }
+                break;
+            case "rxInfo":
+                $creationTime = "20" . $name[0]  . $name[1]  . "-" .
+                                       $name[2]  . $name[3]  . "-" .
+                                       $name[4]  . $name[5]  . " " .
+                                       $name[7]  . $name[8]  . ":" .
+                                       $name[9]  . $name[10] . ":" .
+                                       $name[11] . $name[12];
+                break;
+            case "pos":
+                $creationTime = "20" . $name[0] . $name[1] . "-" .
+                                       $name[2] . $name[3] . "-" .
+                                       $name[4] . $name[5] . " " .
+                                       $name[7] . $name[8] . ":00:00";
+                break;
+        }
+
+        File::updateOrInsert(
+        [
+            'path' => $path,
+            'type' => $type
+        ],
+        [
+            'version' => $version,
+            'upload_time' => $this->getFileModificationTime($path),
+            'creation_time' => $creationTime
+        ]);
+
+        return File::where('path', $path)->first();
+    }
+
+    /**
+     * @brief Fetch all configuration files of a single base station
+     *   ___           __ _                    _   _                 __      _      _ 
+     *  / __|___ _ _  / _(_)__ _ _  _ _ _ __ _| |_(_)___ _ _  ___  __\ \    (_)_ _ (_)
+     * | (__/ _ \ ' \|  _| / _` | || | '_/ _` |  _| / _ \ ' \(_-< |___> >  _| | ' \| |
+     *  \___\___/_||_|_| |_\__, |\_,_|_| \__,_|\__|_\___/_||_/__/    /_/  (_)_|_||_|_|
+     *                     |___/                                                      
+     */
+    protected function fetchConfigurations($deviceBaseStation)
+    {
+        // Get all paths concerning this base stations
+        $paths = $this->listFiles($deviceBaseStation->name);
+
+        // Keep all .ini only
+        $iniPaths = array();
+        foreach($paths as $path)
+        {
+            if (strstr($path, ".ini"))
+            {
+                $iniPaths[] = $path;
+            }
+        }
+
+        // Ignore the configuration files that are already fetched
+        if (($latestConfiguration = ConfigurationBaseStation::where('device_base_station_id', $deviceBaseStation->id)->latest('file_id')->first()) != null)
+        {
+            if (($lastfile = File::find($latestConfiguration->file_id)) != null)
+            {
+                foreach($iniPaths as $y => $iniPath)
+                {
+                    if ($iniPath <= $lastfile->path)
+                    {
+                        unset($iniPaths[$y]);
+                    }
+                }
+
+                $iniPaths = array_values($iniPaths);
+            }
+        }
+
+        // Save the remaining configuration paths that were still not fetched
+        foreach($iniPaths as $iniPath)
+        {
+            // Processing file
+            echo("Processing configuration : $iniPath\n");
+
+            // Update/save the configuration file
+            $file = $this->saveFile("ini", 1, $iniPath);
+
+            // Download the configuration file
+            $myFileRows = $this->getFile($iniPath);
+
+            // Parse the configuration file
+            $configurationFields = array();
+            foreach ($myFileRows as $myFileRow)
+            {
+                preg_match_all("#([A-Z_]+)=([0-9:.-]+)#", $myFileRow, $matches);
+
+                // Check that something matched the regular expression at this line in the 
+                if ((count($matches[0]) > 0) && (array_key_exists($matches[1][0], $this->cMyConfigurationKeys)))
+                {
+                    // If yes, save the key and its the corresponding value
+                    $configurationFields[$matches[1][0]] = $matches[count($matches) - 1][0];
                 }
             }
 
-            // Get the latest configuration fetching date
-            if (($device = Device::where([['system_id', $baseStation_id],['table_type', 'device_base_stations']])->first()) != null)
+            $configurationBaseStation = new ConfigurationBaseStation;
+            $configurationBaseStation->device_base_station_id = $deviceBaseStation->id;
+            $configurationBaseStation->file_id = $file->id;
+            $configurationBaseStation->validity = 'valid';
+
+            if (count($configurationFields) == 0)
             {
-                if (($latestConfiguration = ConfigurationBaseStation::where('device_base_station_id', $device->table_id)->latest('file_id')->first()) != null)
-                {
-                    if (($lastfile = File::find($latestConfiguration->file_id)) != null)
-                    {
-                        foreach($iniPaths as $y => $iniPath)
-                        {
-                            if ($iniPath <= $lastfile->path)
-                            {
-                                unset($iniPaths[$y]);
-                            }
-                        }
-        
-                        $iniPaths = array_values($iniPaths);
-                    }
-                }
+                $configurationBaseStation->validity = 'corrupted';
             }
-
-            // Save the remaining configuration paths that were still not fetched
-            foreach($iniPaths as $iniPath)
+            
+            foreach($configurationFields as $key => $value)
             {
-                // Check file existency in the database Save the rxInfo file in the database
-                $file = File::where('path', $iniPath)->first();
-                if ($file == null)
+                if (!is_numeric($value))
                 {
-                    $file = new File;
-                    $file->type = "ini";
-                    $file->version = 1;
-                    $file->path = $iniPath;
-                    $file->upload_time = $this->getFileModificationTime($iniPath);
-                    $name = explode("/", $iniPath);
-                    $name = end($name);
-                    if (($name[0] >= '0') && ($name[0] <= '9'))
-                    {
-                        $file->creation_time = "20" . $name[0]  . $name[1]  . "-" . $name[2]  . $name[3]  . "-" .
-                                                      $name[4]  . $name[5]  . " " . $name[7]  . $name[8]  . ":" .
-                                                      $name[9]  . $name[10] . ":" . $name[11] . $name[12];
-                    }
-                    
-                    $file->save();
+                    $configurationBaseStation->validity = 'corrupted';
+                    $configurationBaseStation[$this->cMyConfigurationKeys[$key]] = 0;
                 }
-
-                // Download the configuration file
-                $myFileRows = $this->getFile($iniPath);
-
-                // Parse the configuration file
-                unset($configurationFields);
-                $configurationFields = array();
-                foreach ($myFileRows as $myFileRow)
-                {
-                    preg_match_all("#([A-Z_]+)=([0-9:.-]+)#", $myFileRow, $matches);
-
-                    // Check that something matched the regular expression at this line in the 
-                    if ((count($matches[0]) > 0) && (array_key_exists($matches[1][0], $this->cMyConfigurationKeys)))
-                    {
-                        // If yes, save the key and its the corresponding value
-                        $configurationFields[$matches[1][0]] = $matches[count($matches) - 1][0];
-                    }
-                }
-
-                if (count($configurationFields) == 0)
-                {
-                    echo("No data recognized in the configuration file $iniPath -> Operation aborted\n");
-                    continue;
-                }
-
-                if ($device == null)
-                {
-                    $deviceBaseStation = new DeviceBaseStation;
-                    $deviceBaseStation->save();
-
-                    $device = new Device;
-                    $device->system_id = $baseStation_id;
-                    $device->table_id = $deviceBaseStation->id;
-                    $device->table_type = "device_base_stations";
-                    $device->save();
-                }
-
-                $configurationBaseStation = new ConfigurationBaseStation;
-                $configurationBaseStation->device_base_station_id = $device->table_id;
-                $configurationBaseStation->file_id = $file->id;
-                foreach($configurationFields as $key => $value)
+                else
                 {
                     $configurationBaseStation[$this->cMyConfigurationKeys[$key]] = $value;
                 }
-
-                $configurationBaseStation->save();
             }
 
-            //    ___                 ___ _        _   _                 __            ___       __     
-            //   | _ ) __ _ ___ ___  / __| |_ __ _| |_(_)___ _ _  ___  __\ \   _ ___ _|_ _|_ _  / _|___ 
-            //   | _ \/ _` (_-</ -_) \__ \  _/ _` |  _| / _ \ ' \(_-< |___> > | '_\ \ /| || ' \|  _/ _ \
-            //   |___/\__,_/__/\___| |___/\__\__,_|\__|_\___/_||_/__/    /_/  |_| /_\_\___|_||_|_| \___/
-            //                                                                                          
+            $configurationBaseStation->save();
+        }
+    }
 
-            // Keep only the folders (remvove other suspicious folder or files)
-            $measurePathTemplate = "GM_BASE_XXXX/YYMMDD_HH";
-            unset($measurePaths);
-            $measurePaths = array();
-            foreach ($paths as $path)
+    /**
+     * @brief Fetch all rxinfo files of a single base station
+     *  ___                 ___ _        _   _                 __            ___       __     
+     * | _ ) __ _ ___ ___  / __| |_ __ _| |_(_)___ _ _  ___  __\ \   _ ___ _|_ _|_ _  / _|___ 
+     * | _ \/ _` (_-</ -_) \__ \  _/ _` |  _| / _ \ ' \(_-< |___> > | '_\ \ /| || ' \|  _/ _ \
+     * |___/\__,_/__/\___| |___/\__\__,_|\__|_\___/_||_/__/    /_/  |_| /_\_\___|_||_|_| \___/                                                                                       
+     */
+    protected function fetchRxInfos($deviceBaseStation)
+    {
+        // Get all paths concerning this base stations
+        $paths = $this->listFolders($deviceBaseStation->name);
+
+        // Keep only the folders (remvove other suspicious folder or files)
+        $template = "GM_BASE_XXXX/YYMMDD_HH";
+        foreach ($paths as $y => $path)
+        {
+            if (strlen($path) != strlen($template))
             {
-                if (strlen($path) == strlen($measurePathTemplate))
-                {
-                    $measurePaths[] = $path;
-                }
+                unset($paths[$y]);
             }
+        }
 
-            // Get the last processed measure date for this base station
-            if (($device = Device::where([['system_id', $baseStation_id],['table_type', 'device_base_stations']])->first()) != null)
+        // Protection against empty paths
+        if (count($paths) == 0)
+        {
+            echo("No measurement path found in $deviceBaseStation->name\n");
+            return;
+        }
+
+        // Ignore the rxInfo files that are already fetched
+        if (($lastMeasureDevice = MeasureDevice::where('device_id', Device::where([['table_id', $deviceBaseStation->id], ['table_type', 'device_base_stations']])->first()->id)->latest('file_id')->first()) != null)
+        {
+            if (($lastfile = File::find($lastMeasureDevice->file_id)) != null)
             {
-                if (($lastMeasureDevice = MeasureDevice::where('device_id', $device->id)->latest('file_id')->first()) != null)
+                foreach($paths as $y => $path)
                 {
-                    if (($lastfile = File::find($lastMeasureDevice->file_id)) != null)
+                    if ($path <= $lastfile->path)
                     {
-                        foreach($measurePaths as $y => $measurePath)
-                        {
-                            if ($measurePath <= $lastfile->path)
-                            {
-                                unset($measurePaths[$y]);
-                            }
-                        }
-        
-                        $measurePaths = array_values($measurePaths);
+                        unset($paths[$y]);
                     }
                 }
             }
+        }
 
-            if (count($measurePaths) == 0)
+        $paths = array_values($paths);
+
+        // For all not processed paths
+        foreach($paths as $path)
+        {
+            $measureFiles = $this->listFiles($path);
+
+            // Find the rxInfo file
+            $rxInfoPath = null;
+            foreach ($measureFiles as $measureFile)
             {
-                echo("No new information to synchronize for base station $baseStation_id -> Operation aborted\n");
+                if (strstr($measureFile, "rxInfo"))
+                {
+                    $rxInfoPath = $measureFile;
+                }
+            }
+
+            if ($rxInfoPath == null)
+            {
+                echo("No rxInfo file found in $path -> Operation aborted\n");
                 continue;
             }
 
-            // For all not processed paths
-            foreach($measurePaths as $measurePath)
-            {
-                echo("Processing measure : $measurePath\n");
-                $measureFiles = $this->listDir($measurePath);
+            // Download the rxInfo file
+            $myFileRows = $this->getFile($rxInfoPath);
 
-                // Find the rxInfo file
-                $rxInfoPath = null;
-                unset($posPaths);
-                $posPaths = array();
-                foreach ($measureFiles as $measureFile)
+            // Parse the rxInfo file
+            $i = 0;
+            unset($rxInfo);
+            $rxInfo = array();
+            foreach ($myFileRows as $myFileRow)
+            {
+                preg_match_all("#(([\w \.]+\.)|([\w \.]+\b)) +: ([\w\.\-:]+)#", $myFileRow, $matches);
+
+                // Check that something matched the regular expression at this line in the rxInfo file.
+                if(count($matches[0]) > 0)
                 {
-                    if (strstr($measureFile, "rxInfo") != FALSE)
+                    // If yes, save the key...
+                    if (strlen($matches[1][0]) > 0)
                     {
-                        $rxInfoPath = $measureFile;
+                        $rxInfo[$i][0] = $matches[1][0];
                     }
-                    else if (strstr($measureFile, ".pos") != FALSE)
+                    else
                     {
-                        $posPaths[] = $measureFile;
+                        $rxInfo[$i][0] = $matches[2][0];
+                    }
+
+                    //... and its the corresponding value
+                    $rxInfo[$i][1] = $matches[count($matches) - 1][0];
+                    $i++;
+                }
+            }
+
+            // Check that the rxInfo is not null
+
+            if (count($rxInfo) == 0)
+            {
+                echo("Empty rxInfo file $rxInfoPath -> Operation aborted\n");
+                continue;
+            }
+
+            // Fetch rxinfo file
+            echo("Processing rxInfo : $rxInfoPath\n");
+
+            // Update/save the rxInfo file
+            $file = $this->saveFile("rxInfo", $rxInfo[0][1], $rxInfoPath);
+
+            // Process the rxInfo file
+            $state = $this->cStateFillBaseStation;
+            $device = Device::where([['table_id', $deviceBaseStation->id], ['table_type', 'device_base_stations']])->first();
+            $measureDevice = new MeasureDevice;
+            $measureDevice->device_id = $device->id;
+            $measureDevice->file_id = $file->id;
+            $deviceRover = null;
+            $measureRover = null;
+            foreach($rxInfo as $item)
+            {
+                $key = $item[0];
+                $value = $item[1];
+
+                // Change state and create device and device rover on the fly if needed
+                if ($key == "GPS_ID")
+                {
+                    // Save last measurement set
+                    if ($state == $this->cStateFillBaseStation)
+                    {
+                        $deviceBaseStation->save();
+                        $measureDevice->save();
+                        $state = $this->cStateFillRover;
+                    }
+                    else if ($state == $this->cStateFillRover)
+                    {
+                        $deviceRover->save();
+                        $measureDevice->save();
+                        $measureRover->save();
+                    }
+
+                    // Prepare next measurement set
+                    $deviceRover = DeviceRover::whereHas('device', function ($query) use ($value) {
+                        return $query->where('system_id', $value);
+                    })->where('device_base_station_id', $deviceBaseStation->id)->first();
+                    if ($deviceRover == null)
+                    {
+                        $deviceRover = new DeviceRover;
+                        $deviceRover->device_base_station_id = $deviceBaseStation->id;
+                        $deviceRover->save();
+
+                        $device = new Device;
+                        $device->table_id = $deviceRover->id;
+                        $device->table_type = 'device_rovers';
+                        $device->system_id = $value;
+                        $device->save();
+                    }
+                    else
+                    {
+                        $device = Device::where([['table_id', $deviceRover->id], ['table_type', 'device_rovers']])->first();
+                    }
+
+                    if (($measureRover = MeasureRover::where([['device_rover_id', $deviceRover->id], ['file_id', $file->id]])->first()) == null)
+                    {
+                        $measureRover = new MeasureRover;
+                        $measureRover->device_rover_id = $deviceRover->id;
+                        $measureRover->file_id = $file->id;
+                    }
+
+                    if (($measureDevice = MeasureDevice::where([['device_id', $device->id], ['file_id', $file->id]])->first()) == null)
+                    {
+                        $measureDevice = new MeasureDevice;
+                        $measureDevice->device_id = $device->id;
+                        $measureDevice->file_id = $file->id;
                     }
                 }
 
-                if ($rxInfoPath == null)
+                // Fill the object fields
+                if (array_key_exists($key, $this->cMyDeviceKeys))
                 {
-                    echo("No rxInfo file found -> Operation aborted.\n");
+                    $device[$this->cMyDeviceKeys[$key]] = $value;
+                }
+                else if (array_key_exists($key, $this->cMyMeasureDeviceKeys))
+                {
+                    $measureDevice[$this->cMyMeasureDeviceKeys[$key]] = $value;
+                }
+                else if (array_key_exists($key, $this->cMyDeviceBaseStationKeys))
+                {
+                    $deviceBaseStation[$this->cMyDeviceBaseStationKeys[$key]] = $value;
+                }
+                else if (array_key_exists($key, $this->cMyMeasureRoverKeys))
+                {
+                    $measureRover[$this->cMyMeasureRoverKeys[$key]] = $value;
+                }
+                else if (array_key_exists($key, $this->cMyDeviceRoverKeys))
+                {
+                    $deviceRover[$this->cMyDeviceRoverKeys[$key]] = $value;
+                }
+            }
+            
+            $measureDevice->save();
+            if ($state == $this->cStateFillRover)
+            {
+                $deviceRover->save();
+                $measureRover->save();
+            }
+        }
+    }
+
+    /**
+     * Fetch all pos files of a single base station
+     *  ___                   ___        _ _   _                 __                   
+     * | _ \_____ _____ _ _  | _ \___ __(_) |_(_)___ _ _  ___  __\ \     _ __  ___ ___
+     * |   / _ \ V / -_) '_| |  _/ _ (_-< |  _| / _ \ ' \(_-< |___> >  _| '_ \/ _ (_-<
+     * |_|_\___/\_/\___|_|   |_| \___/__/_|\__|_\___/_||_/__/    /_/  (_) .__/\___/__/
+     *                                                                  |_|           
+     */
+    protected function fetchPositions($deviceBaseStation)
+    {
+        // Get all paths concerning this base stations
+        $paths = $this->listFolders($deviceBaseStation->name);
+
+        // Keep only the folders (remvove other suspicious folder or files)
+        $template = "GM_BASE_XXXX/YYMMDD_HH";
+        foreach ($paths as $y => $path)
+        {
+            if (strlen($path) != strlen($template))
+            {
+                unset($paths[$y]);
+            }
+        }
+
+        // Protection against empty paths
+        if (count($paths) == 0)
+        {
+            echo("No measurement path found in $deviceBaseStation->name\n");
+            return;
+        }
+
+        if (($deviceRovers = DeviceRover::select('id')->where('device_base_station_id', $deviceBaseStation->id)->get()) != null)
+        {
+            $deviceRoverIds = array();
+            foreach($deviceRovers as $deviceRover)
+            {
+                $deviceRoverIds[] = $deviceRover->id;
+            }
+
+            if (($lastPosition = Position::whereIn('device_rover_id', $deviceRoverIds)->orderBy('file_id', 'desc')->first()) != null)
+            {
+                if (($lastfile = File::find($lastPosition->file_id)) != null)
+                {
+                    foreach($paths as $y => $path)
+                    {
+                        if ($path <= $lastfile->path)
+                        {
+                            unset($paths[$y]);
+                        }
+                    }
+                }
+            }
+        }
+
+        $paths = array_values($paths);
+
+        // For all not processed paths
+        foreach($paths as $path)
+        {
+            $measureFiles = $this->listFiles($path);
+
+            // Find the rxInfo file
+            $posPaths = array();
+            foreach ($measureFiles as $measureFile)
+            {
+                if (strstr($measureFile, ".pos") != FALSE)
+                {
+                    $posPaths[] = $measureFile;
+                }
+            }
+
+            // Process the .pos files if .pos files are existing in the current measure folder path
+            if (count($posPaths) == 0)
+            {
+                echo("No .pos file found in $path -> Operation aborted\n");
+                continue;
+            }
+
+            foreach($posPaths as $posPath)
+            {
+                // Download the .pos file
+                $myFileRows = $this->getFile($posPath);
+
+                //Remove all header lines (useless)
+                foreach($myFileRows as $y => $myFileRow)
+                {
+                    if ($myFileRow[0] == "%")
+                    {
+                        unset($myFileRows[$y]);
+                    }
+                }
+
+                $myFileRows = array_values($myFileRows);
+                
+                // Check that there are position data in this file
+                if (count($myFileRows) == 0)
+                {
+                    echo("No position data in $posPath -> Operation aborted\n");
                     continue;
                 }
 
-                // Download the rxInfo file
-                $myFileRows = $this->getFile($rxInfoPath);
+                echo("Processing position : $posPath\n");
 
-                // Parse the rxInfo file
                 $i = 0;
-                unset($rxInfo);
-                $rxInfo = array();
-                foreach ($myFileRows as $myFileRow)
+                unset($positions);
+                $positions = array();
+                foreach($myFileRows as $myFileRow)
                 {
-                    preg_match_all("#(([\w \.]+\.)|([\w \.]+\b)) +: ([\w\.\-:]+)#", $myFileRow, $matches);
+                    preg_match_all("([:\/\-\d.]+)", $myFileRow, $matches);
+                    $matches = $matches[0];
 
-                    // Check that something matched the regular expression at this line in the 
-                    if(count($matches[0]) > 0)
+                    // Check that Q = 1
+                    if ($matches[5] == 1)
                     {
-                        // If yes, save the key...
-                        if (strlen($matches[1][0]) > 0)
-                        {
-                            $rxInfo[$i][0] = $matches[1][0];
-                        }
-                        else
-                        {
-                            $rxInfo[$i][0] = $matches[2][0];
-                        }
-
-                        //... and its the corresponding value
-                        $rxInfo[$i][1] = $matches[count($matches) - 1][0];
+                        $positions['latitude'][$i]  = $matches[2];
+                        $positions['longitude'][$i] = $matches[3];
+                        $positions['height'][$i]    = $matches[4];
+                        $positions['Q'][$i]         = $matches[5];
+                        $positions['ns'][$i]        = $matches[6];
+                        $positions['sdn'][$i]       = $matches[7];
+                        $positions['sde'][$i]       = $matches[8];
+                        $positions['sdu'][$i]       = $matches[9];
+                        $positions['sdne'][$i]      = $matches[10];
+                        $positions['sdeu'][$i]      = $matches[11];
+                        $positions['sdun'][$i]      = $matches[12];
                         $i++;
                     }
                 }
 
-                // Check that the rxInfo is not null
-                if (count($rxInfo) == 0)
+                // Check that there are positions with Q = 1, then...
+                if ($i == 0)
                 {
-                    echo("rxInfo file corrupted -> Operation aborted\n");
+                    echo("No position with Q = 1 in file $posPath -> Operation aborted\n");
                     continue;
                 }
 
-                // Check file existency in the database Save the rxInfo file in the database
-                $file = File::where('path', $rxInfoPath)->first();
-                if ($file == null)
+                // Now it worth to save the file
+                // Check if the .pos file is already existing in the database...
+                
+                // Update/save the position file
+                $file = $this->saveFile("pos", 1, $posPath);
+
+                // Check position existency in the database or save it
+                $deviceRoverSystemId = substr($posPath, 0, -4);
+                $deviceRoverSystemId = intval(substr($deviceRoverSystemId, 52));
+                
+                $deviceRover = DeviceRover::whereHas('device', function ($query) use ($deviceRoverSystemId) {
+                    return $query->where('system_id', $deviceRoverSystemId);
+                })->where('device_base_station_id', $deviceBaseStation->id)->first();
+
+                if ($deviceRover == null)
                 {
-                    $file = new File;
-                    $file->type = "rxInfo";
-                    $file->version = $rxInfo[0][1];
-                    $file->path = $rxInfoPath;
-                    $file->upload_time = $this->getFileModificationTime($rxInfoPath);
-                    $name = explode("/", $rxInfoPath);
-                    $name = end($name);
-                    $file->creation_time = "20" . $name[0]  . $name[1]  . "-" .
-                                                  $name[2]  . $name[3]  . "-" .
-                                                  $name[4]  . $name[5]  . " " .
-                                                  $name[7]  . $name[8]  . ":" .
-                                                  $name[9]  . $name[10] . ":" .
-                                                  $name[11] . $name[12];
-                    $file->save();
-                }
-
-                // Process the rxInfo and set the intial conditions
-                $state = $this->cStateFillBaseStation;
-                $device = null;
-                $deviceBaseStation = null;
-                $deviceRover = null;
-                $measureDevice = null;
-                $measureRover = null;
-                foreach($rxInfo as $item)
-                {
-                    $key = $item[0];
-                    $value = $item[1];
-
-                    // Check if data must be saved
-                    if ($key == "GPS_ID")
-                    {
-                        if ($state == $this->cStateFillBaseStation)
-                        {
-                            $deviceBaseStation->user_id = NULL;
-                            $deviceBaseStation->save();
-
-                            $device->table_id = $deviceBaseStation->id;
-                            $device->save();
-
-                            $measureDevice->device_id = $device->id;
-                            $measureDevice->file_id = $file->id;
-                            $measureDevice->save();
-
-                            $device = NULL;
-                            $state = $this->cStateFillRover;
-                        }
-                        else if ($state == $this->cStateFillRover)
-                        {
-                            $deviceRover->device_base_station_id = $deviceBaseStation->id;
-                            $deviceRover->save();
-
-                            $device->table_id = $deviceRover->id;
-                            $device->save();
-
-                            $measureDevice->device_id = $device->id;
-                            $measureDevice->file_id = $file->id;
-                            $measureDevice->save();
-
-                            $measureRover->device_rover_id = $deviceRover->id;
-                            $measureRover->file_id = $file->id;
-                            $measureRover->save();
-
-                            $device = NULL;
-                        }
-                    }
-
-                    // Check existency
-                    if ($device == null)
-                    {
-                        if ($state == $this->cStateFillBaseStation)
-                        {
-                            $device = Device::where([['system_id', $baseStation_id],['table_type', 'device_base_stations']])->first();
-                            if($device == null)
-                            {
-                                // Device was not existing
-                                $device = new Device;
-                                $device->system_id = $baseStation_id;
-                                $device->table_type = 'device_base_stations';
-                                $deviceBaseStation = new DeviceBaseStation;
-                            }
-                            else
-                            {
-                                // Device was already existing
-                                $deviceBaseStation = DeviceBaseStation::find($device->table_id);
-                            }
-                        }
-                        else if ($state == $this->cStateFillRover)
-                        {
-                            // Check existency
-                            if ($device == null)
-                            {
-                                $deviceRover = DeviceRover::whereHas('device', function ($query) use ($value) 
-                                                            {
-                                                                return $query->where('system_id', $value);
-                                                            })
-                                                            ->where('device_base_station_id', $deviceBaseStation->id)
-                                                            ->first();
-
-                                if($deviceRover == null)
-                                {
-                                    // Device/DeviceRover were not existing
-                                    $device = new Device;
-                                    $device->system_id = $value;
-                                    $device->table_type = 'device_rovers';
-                                    $deviceRover = new DeviceRover;
-                                }
-                                else
-                                {
-                                    $device = Device::where([['table_id', $deviceRover->id],['table_type', 'device_rovers']])->first();
-                                }
-
-                                $measureRover = MeasureRover::where([['device_rover_id', $deviceRover->id], ['file_id', $file->id]])->first();
-                                if ($measureRover == null)
-                                {
-                                    $measureRover = new MeasureRover;
-                                }
-                            }
-                        }
-
-                        $measureDevice = MeasureDevice::where([['device_id', $device->id], ['file_id', $file->id]])->first();
-                        if ($measureDevice == null)
-                        {
-                            $measureDevice = new MeasureDevice;
-                        }
-                    }
-
-                    // Fill the object fields
-                    if (array_key_exists($key, $this->cMyDeviceKeys))
-                    {
-                        $device[$this->cMyDeviceKeys[$key]] = $value;
-                    }
-                    else if (array_key_exists($key, $this->cMyMeasureDeviceKeys))
-                    {
-                        $measureDevice[$this->cMyMeasureDeviceKeys[$key]] = $value;
-                    }
-                    else if (array_key_exists($key, $this->cMyDeviceBaseStationKeys))
-                    {
-                        $deviceBaseStation[$this->cMyDeviceBaseStationKeys[$key]] = $value;
-                    }
-                    else if (array_key_exists($key, $this->cMyMeasureRoverKeys))
-                    {
-                        $measureRover[$this->cMyMeasureRoverKeys[$key]] = $value;
-                    }
-                    else if (array_key_exists($key, $this->cMyDeviceRoverKeys))
-                    {
-                        $deviceRover[$this->cMyDeviceRoverKeys[$key]] = $value;
-                    }
-                }
-
-                if ($state == $this->cStateFillBaseStation)
-                {
-                    $deviceBaseStation->user_id = NULL;
-                    $deviceBaseStation->save();
-
-                    $device->table_id = $deviceBaseStation->id;
-                    $device->save();
-
-                    $measureDevice->device_id = $device->id;
-                    $measureDevice->file_id = $file->id;
-                    $measureDevice->save();
-                }
-                else if ($state == $this->cStateFillRover)
-                {
-                    $deviceRover->device_base_station_id = $deviceBaseStation->id;
-                    $deviceRover->save();
-
-                    $device->table_id = $deviceRover->id;
-                    $device->save();
-
-                    $measureRover->device_rover_id = $deviceRover->id;
-                    $measureRover->file_id = $file->id;
-                    $measureRover->save();
-                }
-
-                //    ___                   ___        _ _   _                 __                   
-                //   | _ \_____ _____ _ _  | _ \___ __(_) |_(_)___ _ _  ___  __\ \     _ __  ___ ___
-                //   |   / _ \ V / -_) '_| |  _/ _ (_-< |  _| / _ \ ' \(_-< |___> >  _| '_ \/ _ (_-<
-                //   |_|_\___/\_/\___|_|   |_| \___/__/_|\__|_\___/_||_/__/    /_/  (_) .__/\___/__/
-                //                                                                    |_|           
-
-                // Process the .pos files if .pos files are existing in the current measure folder path
-                if (count($posPaths) == 0)
-                {
-                    echo("No .pos file found in $measurePath -> Operation aborted\n");
+                    echo("Position file corresponding to a non-existing rover ($deviceRoverSystemId)\n");
                     continue;
                 }
-
-                foreach($posPaths as $posPath)
+                
+                $position = Position::where([['device_rover_id', $deviceRover->id], ['file_id', $file->id]])->first();
+                if ($position == null)
                 {
-                    // Download the .pos file
-                    $myFileRows = $this->getFile($posPath);
-
-                    //Remove all header lines (useless)
-                    foreach($myFileRows as $y => $myFileRow)
-                    {
-                        if ($myFileRow[0] == "%")
-                        {
-                            unset($myFileRows[$y]);
-                        }
-                    }
-
-                    $myFileRows = array_values($myFileRows);
-                    
-                    // Check that there are position data in this file
-                    if (count($myFileRows) == 0)
-                    {
-                        echo("No position data in $posPath -> Operation aborted\n");
-                        continue;
-                    }
-
-                    $i = 0;
-                    unset($positions);
-                    $positions = array();
-                    foreach($myFileRows as $myFileRow)
-                    {
-                        preg_match_all("([:\/\-\d.]+)", $myFileRow, $matches);
-                        $matches = $matches[0];
-
-                        // Check that Q = 1
-                        if ($matches[5] == 1)
-                        {
-                            $positions['latitude'][$i]  = $matches[2];
-                            $positions['longitude'][$i] = $matches[3];
-                            $positions['height'][$i]    = $matches[4];
-                            $positions['Q'][$i]         = $matches[5];
-                            $positions['ns'][$i]        = $matches[6];
-                            $positions['sdn'][$i]       = $matches[7];
-                            $positions['sde'][$i]       = $matches[8];
-                            $positions['sdu'][$i]       = $matches[9];
-                            $positions['sdne'][$i]      = $matches[10];
-                            $positions['sdeu'][$i]      = $matches[11];
-                            $positions['sdun'][$i]      = $matches[12];
-                            $i++;
-                        }
-                    }
-
-                    // Check that there are positions with Q = 1, then...
-                    if ($i == 0)
-                    {
-                        echo("No position with Q = 1 in file $posPath -> Operation aborted\n");
-                        continue;
-                    }
-
-                    // Now it worth to save the file
-                    // Check if the .pos file is already existing in the database...
-                    $file = File::where('path', $posPath)->first();
-                    if ($file == null)
-                    {
-                        $file = new File;
-                        $file->type = "pos";
-                        $file->version = "1";
-                        $file->path = $posPath;
-                        $file->upload_time = $this->getFileModificationTime($posPath);
-                        $name = explode("/", $posPath);
-                        $name = end($name);
-                        $file->creation_time = "20" . $name[0] . $name[1] . "-" .
-                                                      $name[2] . $name[3] . "-" .
-                                                      $name[4] . $name[5] . " " .
-                                                      $name[7] . $name[8] . ":00:00";
-                        $file->save();
-                    }
-
-                    // Check position existency in the database or save it
-                    $deviceRoverSystemId = substr($name, 0, -4);
-                    $deviceRoverSystemId = intval(substr($deviceRoverSystemId, 29));
-                    
-                    $deviceRover = DeviceRover::whereHas('device', function ($query) use ($deviceRoverSystemId) 
-                                                {
-                                                    return $query->where('system_id', $deviceRoverSystemId);
-                                                })
-                                                ->where('device_base_station_id', $deviceBaseStation->id)
-                                                ->first();
-                    
-                    $position = Position::where([['device_rover_id', $deviceRover->id], ['file_id', $file->id]])->first();
-                    if ($position == null)
-                    {
-                        $position = new Position;
-                        $position->device_rover_id = $deviceRover->id;
-                        $position->file_id = $file->id;
-                        $position->height = $this->getMedian($positions['height']);
-                        $position->latitude = $this->getMedian($positions['latitude']);
-                        $position->longitude = $this->getMedian($positions['longitude']);
-                        $position->nbr_of_samples = count($myFileRows);
-                        $position->nbr_of_samples_where_q_equal_1 = count($positions['Q']);
-                        $position->nbr_of_satellites = ceil(array_sum($positions['ns']) / count($positions['ns']));
-                        $position->save();
-                    }
+                    $position = new Position;
+                    $position->device_rover_id = $deviceRover->id;
+                    $position->file_id = $file->id;
+                    $position->height = $this->getMedian($positions['height']);
+                    $position->latitude = $this->getMedian($positions['latitude']);
+                    $position->longitude = $this->getMedian($positions['longitude']);
+                    $position->nbr_of_samples = count($myFileRows);
+                    $position->nbr_of_samples_where_q_equal_1 = count($positions['Q']);
+                    $position->nbr_of_satellites = ceil(array_sum($positions['ns']) / count($positions['ns']));
+                    $position->save();
                 }
-
-                echo("Measure path processed: $measurePath\n");
             }
-
-            echo("Base station $baseStation_id processed\n");
         }
-    
+    }
+
+    /**
+     * Fetch one base station
+     */
+    protected function fetch($baseStationName)
+    {
+        // Connect to the remote file system
+        if ($this->connect() == FALSE)
+        {
+            return;
+        }
+
+        // Get the base station from database (or create it if not existing)
+        $deviceBaseStation = DeviceBaseStation::where('name', $baseStationName)->first();
+        if ($deviceBaseStation == null)
+        {
+            $deviceBaseStation = new DeviceBaseStation;
+            $deviceBaseStation->name = $baseStationName;
+            $deviceBaseStation->save();
+
+            $device = new Device;
+            $device->table_type = 'device_base_stations';
+            $device->table_id = $deviceBaseStation->id;
+            $device->system_id = intval(substr($baseStationName, -4));
+            $device->save();
+        }
+
+        // CONFIGURATIONS -> .ini
+        $this->fetchConfigurations($deviceBaseStation);
+
+        // RXINFO -> .rxInfo
+        $this->fetchRxInfos($deviceBaseStation);
+
+        // POSITIONS -> .pos
+        $this->fetchPositions($deviceBaseStation);
+
         // Close the connection with the remote file system
         $this->disconnect();
-        return;
+    }
+
+    /**
+     * Fetch all base stations
+     */
+    protected function fetchAll()
+    {
+        $baseStationNames = $this->getListOfBaseStationNames();
+        foreach ($baseStationNames as $baseStationName)
+        {
+            $this->fetch($baseStationName);
+        }
     }
 }

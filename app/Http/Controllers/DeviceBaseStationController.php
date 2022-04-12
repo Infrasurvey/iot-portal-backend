@@ -23,45 +23,11 @@ class DeviceBaseStationController extends Controller
     }
 
     /**
-     * return list of base station that aren't linked with an installation
+     * @brief Update all base stations data from the Geomon FTP server.
      */
-    function getAvailable()
+    function updateAll()
     {
-        return DeviceBaseStation::doesnthave('installation')->get()->makeHidden(['rovers','last_configuration']);
-    }
-
-    /**
-     * return specific base station based on id field.
-     */
-    function getSingle($id)
-    {
-        return DeviceBaseStation::find($id);
-    }
-
-    /**
-     * return base station's configurations list based on base station id.
-     */
-    function getConfigurations($id)
-    {
-        return DeviceBaseStation::find($id)->configurations;
-    }
-
-    /**
-     * return specific base station based on id field with linked rovers.
-     */
-    function getRovers($id)
-    {
-        return DeviceBaseStation::with('rovers')->get()->find($id);
-    }
-
-    /**
-     * brief Get all rover positions
-     */
-    function getRoversPositions($id)
-    {
-        return DeviceBaseStation::whereHas('installation',function($query) use ($id){
-            $query->where('id',$id);
-        })->with(['rovers'])->get()->makeVisible(['rovers','last_configuration']);
+        \Artisan::call('geomon:fetch_ftp');
     }
 
     /**
@@ -77,16 +43,42 @@ class DeviceBaseStationController extends Controller
     }
 
     /**
+     * return specific base station based on id field.
+     */
+    function get($id)
+    {
+        return DeviceBaseStation::find($id);
+    }
+
+    /**
+     * return specific base station based on id field.
+     */
+    function update($id)
+    {
+        if (($deviceBaseStation = DeviceBaseStation::where('id', $id)->first()) != null)
+        {
+            \Artisan::call('geomon:fetch_ftp', ['id' => $deviceBaseStation->name]);
+        }
+        else
+        {
+            // return 404 not found
+        }
+    }
+
+    /**
      * @brief Delete a single base station and related data
      */
-    function deleteSingle($id)
+    function delete($id)
     {
         $fileIds = array();
 
         // Check that base station record exists
         if (DeviceBaseStation::where('id', $id)->doesntExist())
         {
-            return;
+            return response()->json([
+                'message' => "no data",
+                'num' => 12
+            ], 500);
         }
 
         // Delete all configurations
@@ -142,5 +134,39 @@ class DeviceBaseStationController extends Controller
 
         // Delete all files
         File::whereIn('id', array_unique($fileIds))->delete();
+    }
+
+    /**
+     * return base station's configurations list based on base station id.
+     */
+    function getConfigurations($id)
+    {
+        return DeviceBaseStation::find($id)->configurations;
+    }
+
+    /**
+     * return specific base station based on id field with linked rovers.
+     */
+    function getRovers($id)
+    {
+        return DeviceBaseStation::with('rovers')->get()->find($id);
+    }
+
+    /**
+     * brief Get all rover positions
+     */
+    function getRoversPositions($id)
+    {
+        return DeviceBaseStation::whereHas('installation',function($query) use ($id){
+            $query->where('id',$id);
+        })->with(['rovers'])->get()->makeVisible(['rovers','last_configuration']);
+    }
+
+    /**
+     * return list of base station that aren't linked with an installation
+     */
+    function getAvailable()
+    {
+        return DeviceBaseStation::doesnthave('installation')->get()->makeHidden(['rovers','last_configuration']);
     }
 }
