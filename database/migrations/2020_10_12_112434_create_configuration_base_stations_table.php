@@ -28,6 +28,7 @@ class CreateConfigurationBaseStationsTable extends Migration
             $table->double('reference_latitude')->nullable();
             $table->double('reference_longitude')->nullable();
             $table->double('reference_altitude')->nullable();
+            $table->enum('validity', ['valid', 'corrupted']);
             $table->timestamps();
         });
     }
