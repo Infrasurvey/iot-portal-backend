@@ -59,7 +59,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         //-------------------Installation--------------------------------------
-        \App\Models\Installation::factory()->create([
+        /*\App\Models\Installation::factory()->create([
             'group_id' => 1,
             'device_base_station_id' => 1,
             'name' => 'Hohberg',

@@ -19,7 +19,7 @@ class FetchDeviceDataFtp extends FetchDeviceData
      * @var string
      */
     protected $signature = 'geomon:fetch_ftp
-                            {name? : The name of the base station to update}';
+                            {geomonId? : Base station ID given in the Geomon system (GM_BASE_<ID>)}';
 
     /**
      * The console command description.
@@ -106,6 +106,12 @@ class FetchDeviceDataFtp extends FetchDeviceData
         $paths = ftp_nlist($this->ftp, $dirPath);
         $metas = ftp_rawlist($this->ftp, $dirPath);
         
+        // Check for empty folder
+        if ($paths == null)
+        {
+            return null;
+        }
+        
         // Remove each item not being a file
         sort($paths);
         foreach($metas as $y => $meta)
@@ -171,14 +177,14 @@ class FetchDeviceDataFtp extends FetchDeviceData
      */
     public function handle()
     {
-        $baseStationId = $this->argument('name');
-        if ($baseStationId == null)
+        $geomonId = $this->argument('geomonId');
+        if ($geomonId == null)
         {
             $this->fetchAll();
         }
         else
         {
-            $this->fetch($baseStationId);
+            $this->fetch($geomonId);
         }
     }
 }

@@ -51,38 +51,33 @@ class DeviceBaseStationController extends Controller
     }
 
     /**
-     * return specific base station based on id field.
+     * @brief Update a single base station based on his Geomon ID
+     * @param geomonId Base station ID given in the Geomon system (GM_BASE_<ID>)
      */
-    function update($id)
+    function update($geomonId)
     {
-        if (($deviceBaseStation = DeviceBaseStation::where('id', $id)->first()) != null)
-        {
-            \Artisan::call('geomon:fetch_ftp', ['id' => $deviceBaseStation->name]);
-        }
-        else
-        {
-            // return 404 not found
-        }
+        \Artisan::call('geomon:fetch_ftp', ['geomonId' => $geomonId]);
     }
 
     /**
-     * @brief Delete a single base station and related data
+     * @brief Delete a single base station and all related data (configurations, positions, measures, files)
+     * @param geomonId Base station ID given in the Geomon system (GM_BASE_<ID>)
      */
-    function delete($id)
+    function delete($geomonId)
     {
         $fileIds = array();
 
         // Check that base station record exists
-        if (DeviceBaseStation::where('id', $id)->doesntExist())
+        $device = Device::where([['system_id', $geomonId], ['table_type', 'device_base_stations']])->first();
+        if ($device == null)
         {
             return response()->json([
-                'message' => "no data",
-                'num' => 12
+                'message' => sprintf("Base station GM_BASE_%04d doesn't exist", $geomonId)
             ], 500);
         }
 
         // Delete all configurations
-        foreach (ConfigurationBaseStation::where('device_base_station_id', $id)->cursor() as $configuration)
+        foreach (ConfigurationBaseStation::where('device_base_station_id', $device->table_id)->cursor() as $configuration)
         {
             // Delete all configurations files
             ConfigurationBaseStation::where('id', $configuration->id)->delete();
@@ -90,7 +85,7 @@ class DeviceBaseStationController extends Controller
         }
 
         // Delete all rover measures and positions
-        foreach (DeviceRover::where('device_base_station_id', $id)->cursor() as $deviceRover)
+        foreach (DeviceRover::where('device_base_station_id', $device->table_id)->cursor() as $deviceRover)
         {
             // Positions
             foreach (Position::where('device_rover_id', $deviceRover->id)->cursor() as $position)
@@ -107,7 +102,7 @@ class DeviceBaseStationController extends Controller
             }
 
             // Device measures
-            foreach (MeasureDevice::where('device_id', Device::where('table_id', $deviceRover->id)->where('table_type', 'device_rovers')->first()->id)->cursor() as $measureDevice)
+            foreach (MeasureDevice::where('device_id', Device::where([['table_id', $deviceRover->id], ['table_type', 'device_rovers']])->first()->id)->cursor() as $measureDevice)
             {
                 MeasureDevice::where('id', $measureDevice->id)->delete();
                 array_push($fileIds, File::where('id', $measureDevice->file_id)->first()->id);
@@ -117,20 +112,21 @@ class DeviceBaseStationController extends Controller
             DeviceRover::where('id', $deviceRover->id)->delete();
 
             // Delete device
-            Device::where('table_id', $deviceRover->id)->where('table_type', 'device_rovers')->delete();
+            Device::where([['table_id', $deviceRover->id], ['table_type', 'device_rovers']])->delete();
         }
-            // Delete all device measures and device measure files
-        foreach (MeasureDevice::where('device_id', Device::where('table_id', $id)->where('table_type', 'device_base_stations')->first()->id)->cursor() as $measureDevice)
-            {
-                MeasureDevice::where('id', $measureDevice->id)->delete();
-                array_push($fileIds, File::where('id', $measureDevice->file_id)->first()->id);
+        
+        // Delete all device measures and device measure files (linked to base station)
+        foreach (MeasureDevice::where('device_id', $device->id)->cursor() as $measureDevice)
+        {
+            MeasureDevice::where('id', $measureDevice->id)->delete();
+            array_push($fileIds, File::where('id', $measureDevice->file_id)->first()->id);
         }
 
         // Delete device (linked to base station)
-        Device::where('table_id', $id)->where('table_type', 'device_base_stations')->delete();
+        $device->delete();
 
         // Delete base station
-        DeviceBaseStation::where('id', $id)->delete();
+        DeviceBaseStation::where('id', $device->table_id)->delete();
 
         // Delete all files
         File::whereIn('id', array_unique($fileIds))->delete();

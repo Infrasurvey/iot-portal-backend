@@ -46,8 +46,8 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::delete('device/basestation/all', [DeviceBaseStationController::class, 'deleteAll']);
     Route::get('device/basestation/available', [DeviceBaseStationController::class, 'getAvailable']);
     Route::get('device/basestation/{id}', [DeviceBaseStationController::class, 'get']);
-    Route::post('device/basestation/{id}', [DeviceBaseStationController::class, 'update']);
-    Route::delete('device/basestation/{id}', [DeviceBaseStationController::class, 'delete']);
+    Route::post('device/basestation/{geomonId}', [DeviceBaseStationController::class, 'update']);
+    Route::delete('device/basestation/{geomonId}', [DeviceBaseStationController::class, 'delete']);
     Route::get('device/basestation/{id}/configurations', [DeviceBaseStationController::class, 'getConfigurations']);
     Route::get('device/basestation/{id}/rovers', [DeviceBaseStationController::class, 'getRovers']);
     Route::get('device/basestation/{id}/roversPositions', [DeviceBaseStationController::class, 'getRoversPositions']);
@@ -55,7 +55,7 @@ Route::middleware('auth:sanctum')->group( function () {
     // Device -> Rover
     Route::get('device/rover/all', [DeviceRoverController::class, 'getDeviceRovers']);
     Route::get('device/rover/{id}', [DeviceRoverController::class, 'getDeviceRover']);
-    
+
 
     Route::apiResource('user', 'UserController');
     Route::get('usersWithGroups', [UserController::class, 'usersWithGroups']);

@@ -741,7 +741,7 @@ abstract class FetchDeviceData extends Command
     /**
      * Fetch one base station
      */
-    protected function fetch($baseStationName)
+    protected function fetch($geomonId)
     {
         // Connect to the remote file system
         if ($this->connect() == FALSE)
@@ -749,19 +749,36 @@ abstract class FetchDeviceData extends Command
             return;
         }
 
-        // Get the base station from database (or create it if not existing)
-        $deviceBaseStation = DeviceBaseStation::where('name', $baseStationName)->first();
-        if ($deviceBaseStation == null)
+        // Variables
+        $deviceBaseStation = null;
+        $device = Device::where([['system_id', $geomonId], ['table_type', 'device_base_stations']])->first();
+        
+        // Check base station existency in the database
+        if ($device == null)
         {
-            $deviceBaseStation = new DeviceBaseStation;
-            $deviceBaseStation->name = $baseStationName;
-            $deviceBaseStation->save();
-
-            $device = new Device;
-            $device->table_type = 'device_base_stations';
-            $device->table_id = $deviceBaseStation->id;
-            $device->system_id = intval(substr($baseStationName, -4));
-            $device->save();
+            // Check base station existency in the FTP server
+            $name = sprintf('GM_BASE_%04d', $geomonId);
+            if ($this->listFolders($name) != null)
+            {
+                $deviceBaseStation = new DeviceBaseStation;
+                $deviceBaseStation->name = $name;
+                $deviceBaseStation->save();
+    
+                $device = new Device;
+                $device->table_type = 'device_base_stations';
+                $device->table_id = $deviceBaseStation->id;
+                $device->system_id = $geomonId;
+                $device->save();
+            }
+            else
+            {
+                echo("Base station not existing\n");
+                return;
+            }
+        }
+        else
+        {
+            $deviceBaseStation = DeviceBaseStation::where('id', $device->table_id)->first();
         }
 
         // CONFIGURATIONS -> .ini
