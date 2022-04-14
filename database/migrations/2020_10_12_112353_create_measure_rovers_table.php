@@ -17,10 +17,10 @@ class CreateMeasureRoversTable extends Migration
             $table->id();
             $table->foreignId('device_rover_id')->constrained();
             $table->foreignId('file_id')->constrained();
-            $table->bigInteger('rssi')->nullable();
-            $table->double('raw_acceleration_x')->nullable();
-            $table->double('raw_acceleration_y')->nullable();
-            $table->double('raw_acceleration_z')->nullable();
+            $table->bigInteger('rssi');
+            $table->double('raw_acceleration_x');
+            $table->double('raw_acceleration_y');
+            $table->double('raw_acceleration_z');
             $table->timestamps();
         });
     }

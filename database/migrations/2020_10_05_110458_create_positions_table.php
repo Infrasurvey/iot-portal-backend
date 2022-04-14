@@ -23,7 +23,6 @@ class CreatePositionsTable extends Migration
             $table->double('nbr_of_samples');
             $table->double('nbr_of_samples_where_q_equal_1');
             $table->double('nbr_of_satellites');
-            $table->enum('validity', ['valid', 'no_samples', 'no_samples_with_q_equal_1']);
             $table->timestamps();
         });
     }

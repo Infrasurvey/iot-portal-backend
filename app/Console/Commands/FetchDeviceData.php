@@ -800,9 +800,11 @@ abstract class FetchDeviceData extends Command
     protected function fetchAll()
     {
         $baseStationNames = $this->getListOfBaseStationNames();
+        
         foreach ($baseStationNames as $baseStationName)
         {
-            $this->fetch($baseStationName);
+            $geomonId = intval(substr($baseStationName, -4));
+            $this->fetch($geomonId);
         }
     }
 }
