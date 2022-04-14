@@ -83,12 +83,14 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::apiResource('group', 'GroupController');
     Route::get('getCurrentVisibleGroups', [GroupController::class, 'getCurrentVisibleGroups']);
 
+    // Installation
     Route::apiResource('installation', 'InstallationController');
     Route::get('installation/{id}/basestation', [InstallationController::class, 'getBasestationByInstallation']);
+    Route::get('installation/{id}/basestation/device', [InstallationController::class, 'getBasestationDevice']);
     Route::get('installation/{id}/groupid', [InstallationController::class, 'getGroupIdByInstallation']);
     Route::get('installation/{id}/basestation/configurations', [InstallationController::class, 'getBaseStationConfigsByInstallation']);
     Route::get('installation/{id}/basestation/rovers', [InstallationController::class, 'getBaseStationRoversByInstallation']);
-    Route::get('installation/{id}/basestation/roversPositions', [DeviceBaseStationController::class, 'getBaseStationWithRoversPositions']);
+    Route::get('installation/{id}/basestation/roversPositions', [DeviceBaseStationController::class, 'getRoversPositions']);
     Route::get('installation/{id}/basestation/rovers/{system_id}', [DeviceRoverController::class, 'getRoverBySystemId']);
 
     Route::post('updateInstallationImage/{id}', [InstallationController::class, 'updateInstallationImages']);

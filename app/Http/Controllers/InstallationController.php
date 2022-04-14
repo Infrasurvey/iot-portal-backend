@@ -143,6 +143,14 @@ class InstallationController extends Controller
     }
 
     /**
+     * return base station's device
+     */
+    function getBasestationDevice($id)
+    {
+        return Installation::find($id)->basestation->device;
+    }
+
+    /**
      * return group_id of installation
      */
     function getGroupIdByInstallation($id){

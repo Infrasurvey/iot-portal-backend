@@ -15,7 +15,12 @@ class Device extends Model
 
     protected $hidden = [
         'lastmeasuredevice',
-        ];
+    ];
+
+    public function table()
+    {
+        return $this->morphTo();
+    }
 
     public function measure_devices()
     {
