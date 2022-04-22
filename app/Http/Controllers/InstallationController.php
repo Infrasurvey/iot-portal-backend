@@ -131,14 +131,16 @@ class InstallationController extends Controller
     /**
      * return base station configuration by installation
      */
-    function getBaseStationConfigsByInstallation($id){
+    function getBaseStationConfigsByInstallation($id)
+    {
         return Installation::find($id)->basestation->configurations;
     }
 
     /**
      * return base station's rovers by installation
      */
-    function getBaseStationRoversByInstallation($id){
+    function getRovers($id)
+    {
         return Installation::find($id)->basestation->rovers->makeHidden(['default_position','last_communication','battery_voltage']);
     }
 
@@ -235,7 +237,16 @@ class InstallationController extends Controller
             ], 500);
         }   
     }
- 
+
+    /**
+     * @brief Get the configuration where the position reference (lat/long) have changed for the last time.
+     * @param id Installation id
+     * @return configuration Last configuration where the position reference (lat/long) have changed.
+     */
+    public function getLastReferencePositionChange($id)
+    {
+        return Installation::find($id)->basestation->configurations->where('reference_latitude', '<>', NULL)->last();
+    }
  
     /**
      * Display the specified resource.

@@ -138,6 +138,57 @@ abstract class FetchDeviceData extends Command
     }
 
     /**
+     * From Earth-Centered-Earth-Fixed (ECEF) geodetic to ECEF rectangular
+     */
+    public function fromECEFgToECEFr($latitude, $longitude, $height)
+    {
+        // Constants
+        $a = 6378137.000000; // [m] Semi-major axis according WGS84
+        $b = 6356752.314245; // [m] Semi-minor axis according WGS84
+
+        // Conversion to radian
+        $phi    = $longitude * pi() / 180;
+        $lambda = $latitude  * pi() / 180;
+
+        // Ellipsoid flatness
+        $f = ($a - $b) / $a;
+
+        // Ellipsoid eccentricity
+        $e = sqrt($f * (2 - $f));
+
+        // The distance from the surface to the z|axis along the ellipsoid normal
+        $N = $a / sqrt(1 - pow($e, 2) * pow(sin($lambda), 2));
+
+        // x, y, z coordinates
+        $ECEFr = array(
+            "x" => ($height + $N)                    * cos($lambda) * cos($phi),
+            "y" => ($height + $N)                    * cos($lambda) * sin($phi),
+            "z" => ($height + (1 - pow($e, 2)) * $N) * sin($lambda),
+            "phi" => $phi,
+            "lambda" => $lambda
+        );
+
+        return $ECEFr;
+    }
+
+    /**
+     * From Earth-Centered-Earth-Fixed rectangular to Local Tangent Plane
+     */
+    public function fromECEFrtoLTP($v0, $v)
+    {
+        $phi    = $v0["phi"];
+        $lambda = $v0["lambda"];
+
+        $ENU = array(
+            "e" => -sin($phi)                * ($v["x"] - $v0["x"]) + cos($phi)                * ($v["y"] - $v0["y"]) + 0            * ($v["z"] - $v0["z"]),
+            "n" => -cos($phi) * sin($lambda) * ($v["x"] - $v0["x"]) - sin($lambda) * sin($phi) * ($v["y"] - $v0["y"]) + cos($lambda) * ($v["z"] - $v0["z"]),
+            "u" => cos($lambda) * cos($phi)  * ($v["x"] - $v0["x"]) + cos($lambda) * sin($phi) * ($v["y"] - $v0["y"]) + sin($lambda) * ($v["z"] - $v0["z"])
+        );
+
+        return $ENU;
+    }
+
+    /**
      * @brief Connnect to remote folder
      */
     abstract protected function connect();
@@ -699,9 +750,6 @@ abstract class FetchDeviceData extends Command
                     echo("No position with Q = 1 in file $posPath -> Operation aborted\n");
                     continue;
                 }
-
-                // Now it worth to save the file
-                // Check if the .pos file is already existing in the database...
                 
                 // Update/save the position file
                 $file = $this->saveFile("pos", 1, $posPath);
@@ -732,6 +780,15 @@ abstract class FetchDeviceData extends Command
                     $position->nbr_of_samples = count($myFileRows);
                     $position->nbr_of_samples_where_q_equal_1 = count($positions['Q']);
                     $position->nbr_of_satellites = ceil(array_sum($positions['ns']) / count($positions['ns']));
+
+                    // Calulate the easting, northing and up
+                    $configuration = ConfigurationBaseStation::where('device_base_station_id', $deviceBaseStation->id)->orderBy('id', 'desc')->first();
+                    $v0 = $this->fromECEFgToECEFr($configuration->reference_latitude, $configuration->reference_longitude, $configuration->reference_altitude);
+                    $v  = $this->fromECEFgToECEFr($position->latitude, $position->longitude, $position->height);
+                    $enu = $this->fromECEFrtoLTP($v0, $v);
+                    $position->easting = $enu["e"];
+                    $position->northing = $enu["n"];
+                    $position->up = $enu["u"];
                     $position->save();
                 }
             }
