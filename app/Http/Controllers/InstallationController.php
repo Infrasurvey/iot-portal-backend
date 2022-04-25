@@ -245,7 +245,16 @@ class InstallationController extends Controller
      */
     public function getLastReferencePositionChange($id)
     {
-        return Installation::find($id)->basestation->configuration_base_stations->where('reference_latitude', '<>', NULL)->last();
+        $configs = Installation::find($id)->basestation->configuration_base_stations->where('reference_latitude', '<>', NULL)->where('reference_longitude', '<>', NULL);
+        for ($i = count($configs) - 1; $i > 0; $i--)
+        {
+            if (($configs[$i]->reference_longitude != $configs[$i-1]->reference_longitude) || ($configs[$i]->reference_latitude != $configs[$i-1]->reference_latitude))
+            {
+                return $configs[$i];
+            }
+        }
+
+        return $configs[0];
     }
  
     /**
