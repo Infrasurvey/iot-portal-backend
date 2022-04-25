@@ -18,7 +18,7 @@ class DeviceBaseStation extends Model
     protected $hidden = [
         'installation',
         'device',
-         'rovers',
+        'rovers',
         'configurations',
         'lastconf'
     ];
@@ -30,15 +30,16 @@ class DeviceBaseStation extends Model
 
     public function rovers()
     {
-        return $this->hasMany('App\Models\DeviceRover')->with(['device','lastmeasurerover','lastposition']);
+        return $this->hasMany(DeviceRover::class)->with(['device','lastmeasurerover','lastposition']);
     }
 
-    public function configurations()
+    public function configuration_base_stations()
     {
-        return $this->hasMany('App\Models\ConfigurationBaseStation');
+        return $this->hasMany(ConfigurationBaseStation::class);
     }
 
-    public function installation(){
+    public function installation()
+    {
         return $this->hasOne(Installation::class,'device_base_station_id');
     }
 

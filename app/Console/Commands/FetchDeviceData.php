@@ -189,6 +189,51 @@ abstract class FetchDeviceData extends Command
     }
 
     /**
+     * @brief Calculate absolute and relative northing/easting/up for a single position
+     */
+    public function calculateAbsoluteRelativeENU($position)
+    {
+        // Get the configurations corresponding to that base station
+        $configurations = $position->device_rover->device_base_station->configuration_base_stations->where('reference_latitude', '<>', NULL)->where('reference_longitude', '<>', NULL);
+
+        // Take the correct reference latitude/longitude/altitude
+        $reference_configuration = $configurations->first();
+        $reference_rover = $position->device_rover->positions->first();
+        foreach($configurations as $configuration)
+        {
+            $titi = $configuration->file->upload_time;
+            if ($configuration->file->upload_time <= $position->file->upload_time)
+            {
+                $reference_configuration = $configuration;
+
+                // Find the first positon reported after that this configuration was applied.
+                $reference_rover = Position::join('files', 'files.id', '=', 'positions.file_id')
+                                            ->where([['device_rover_id', $position->device_rover_id],
+                                                     ['upload_time', '>=', $configuration->file->upload_time],
+                                                     ['type', 'pos']])
+                                            ->select('positions.latitude', 'positions.longitude', 'positions.height')
+                                            ->first();
+            }
+        }
+
+        // Calculate the easting - northing - up
+        $v0_installation = $this->fromECEFgToECEFr($reference_configuration->reference_latitude, $reference_configuration->reference_longitude, $reference_configuration->reference_altitude);
+        $v_rover = $this->fromECEFgToECEFr($reference_rover->latitude, $reference_rover->longitude, $reference_rover->height);
+        $v = $this->fromECEFgToECEFr($position->latitude, $position->longitude, $position->height);
+        $enu_installation = $this->fromECEFrtoLTP($v0_installation, $v);
+        $enu_rover = $this->fromECEFrtoLTP($v0_installation, $v_rover);
+
+        // Update position with new values
+        $position->absolute_easting = $enu_installation["e"];
+        $position->absolute_northing = $enu_installation["n"];
+        $position->absolute_up = $enu_installation["u"];
+        $position->relative_easting = $enu_installation["e"] - $enu_rover["e"];
+        $position->relative_northing = $enu_installation["n"] - $enu_rover["n"];
+        $position->relative_up = $enu_installation["u"] - $enu_rover["u"];
+        return $position;
+    }
+
+    /**
      * @brief Connnect to remote folder
      */
     abstract protected function connect();
@@ -780,16 +825,10 @@ abstract class FetchDeviceData extends Command
                     $position->nbr_of_samples = count($myFileRows);
                     $position->nbr_of_samples_where_q_equal_1 = count($positions['Q']);
                     $position->nbr_of_satellites = ceil(array_sum($positions['ns']) / count($positions['ns']));
-
-                    // Calulate the easting, northing and up
-                    $configuration = ConfigurationBaseStation::where('device_base_station_id', $deviceBaseStation->id)->orderBy('id', 'desc')->first();
-                    $v0 = $this->fromECEFgToECEFr($configuration->reference_latitude, $configuration->reference_longitude, $configuration->reference_altitude);
-                    $v  = $this->fromECEFgToECEFr($position->latitude, $position->longitude, $position->height);
-                    $enu = $this->fromECEFrtoLTP($v0, $v);
-                    $position->easting = $enu["e"];
-                    $position->northing = $enu["n"];
-                    $position->up = $enu["u"];
                     $position->save();
+                    $position = $this->calculateAbsoluteRelativeENU($position);
+                    $position->update();
+                    // Calulate the easting, northing and up
                 }
             }
         }

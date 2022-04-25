@@ -19,7 +19,7 @@ class MeasureDevice extends Model
 
     public function file()
     {
-        return $this->belongsTo('App\Models\File');
+        return $this->belongsTo(File::class);
     }
 
     public function getDateAttribute(){

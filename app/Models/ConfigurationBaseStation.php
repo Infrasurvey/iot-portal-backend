@@ -23,10 +23,11 @@ class ConfigurationBaseStation extends Model
 
     public function file()
     {
-        return $this->belongsTo('App\Models\File');
+        return $this->belongsTo(File::class);
     }
 
-    public function basestation(){
+    public function basestation()
+    {
         return $this->belongsTo(DeviceBaseStation::class);
     }
 

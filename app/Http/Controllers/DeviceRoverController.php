@@ -32,7 +32,7 @@ class DeviceRoverController extends Controller
      */
     function getRoverBySystemId($id,$system_id){
         
-        $rover = DeviceRover::whereHas('basestation.installation',function($query) use ($id){
+        $rover = DeviceRover::whereHas('device_base_station.installation', function($query) use ($id){
             $query->where('id',$id);
         })->get()->where('system_id',$system_id)->first()->makeHidden(['default_position']);
 

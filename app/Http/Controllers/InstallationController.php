@@ -35,7 +35,7 @@ class InstallationController extends Controller
             $user = Auth::user();
             
             if($user->is_admin){
-                return response()->json(Installation::with(['basestation.device','basestation.configurations','basestation.rovers'])->get()->append([
+                return response()->json(Installation::with(['basestation.device','basestation.configuration_base_stations','basestation.rovers'])->get()->append([
                     'device_rover_count',
                     'battery_voltage',
                     'available_memory',
@@ -133,7 +133,7 @@ class InstallationController extends Controller
      */
     function getBaseStationConfigsByInstallation($id)
     {
-        return Installation::find($id)->basestation->configurations;
+        return Installation::find($id)->basestation->configuration_base_stations;
     }
 
     /**
@@ -245,7 +245,7 @@ class InstallationController extends Controller
      */
     public function getLastReferencePositionChange($id)
     {
-        return Installation::find($id)->basestation->configurations->where('reference_latitude', '<>', NULL)->last();
+        return Installation::find($id)->basestation->configuration_base_stations->where('reference_latitude', '<>', NULL)->last();
     }
  
     /**

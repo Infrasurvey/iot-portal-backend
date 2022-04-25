@@ -137,7 +137,7 @@ class DeviceBaseStationController extends Controller
      */
     function getConfigurations($id)
     {
-        return DeviceBaseStation::find($id)->configurations;
+        return DeviceBaseStation::find($id)->configuration_base_stations;
     }
 
     /**

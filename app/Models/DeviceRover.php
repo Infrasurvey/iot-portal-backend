@@ -31,18 +31,19 @@ class DeviceRover extends Model
         return $this->morphOne('App\Models\Device', 'table')->with('lastmeasuredevice');
     }
 
-    public function basestation(){
-        return $this->belongsTo('App\Models\DeviceBaseStation','device_base_station_id');
+    public function device_base_station()
+    {
+        return $this->belongsTo(DeviceBaseStation::class);
     }
 
     public function measure_rovers()
     {
-        return $this->hasMany('App\Models\MeasureRover')->with('file');
+        return $this->hasMany(MeasureRover::class)->with('file');
     }
 
     public function positions()
     {
-        return $this->hasMany('App\Models\Position');
+        return $this->hasMany(Position::class);
     }
 
     public function lastmeasurerover()

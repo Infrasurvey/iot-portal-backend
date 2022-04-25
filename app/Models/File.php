@@ -11,21 +11,21 @@ class File extends Model
 
     public function configuration_base_station()
     {
-        return $this->hasOne('App\Models\ConfigurationBaseStation');
+        return $this->hasOne(ConfigurationBaseStation::class);
     }
 
     public function measure_device()
     {
-        return $this->hasOne('App\Models\MeasureDevice');
+        return $this->hasOne(MeasureDevice::class);
     }
 
     public function measure_rover()
     {
-        return $this->hasOne('App\Models\MeasureRover');
+        return $this->hasOne(MeasureRover::class);
     }
 
     public function position()
     {
-        return $this->hasOne('App\Models\Position');
+        return $this->hasOne(Position::class);
     }
 }

@@ -17,12 +17,18 @@ class Position extends Model
         'file',
     ];
 
-    public function file()
+    public function device_rover()
     {
-        return $this->belongsTo('App\Models\File');
+        return $this->belongsTo(DeviceRover::class);
     }
 
-    public function getDateAttribute(){
+    public function file()
+    {
+        return $this->belongsTo(File::class);
+    }
+
+    public function getDateAttribute()
+    {
         return $this->file->creation_time;
     }
 }
