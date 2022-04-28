@@ -137,11 +137,29 @@ class InstallationController extends Controller
     }
 
     /**
-     * return base station's rovers by installation
+     * return base station's ALL rovers by installation
      */
-    function getRovers($id)
+    function getAllRovers($id)
     {
         return Installation::find($id)->basestation->rovers->makeHidden(['default_position','last_communication','battery_voltage']);
+    }
+
+    /**
+     * return base station's ACTIVE rovers by installation
+     */
+    function getActiveRovers($id)
+    {
+        $date = $this->getLastReferencePositionChange($id)->configuration_date;
+        $rovers = Installation::find($id)->basestation->rovers->sortBy('id');
+        foreach($rovers as $key => $rover)
+        {
+            if ((count($rover->positions) == 0) || ($rover->positions->last()->file->creation_time < $date))
+            {
+                $rovers->forget($key);
+            }
+        }
+
+        return $rovers;
     }
 
     /**
@@ -245,10 +263,15 @@ class InstallationController extends Controller
      */
     public function getLastReferencePositionChange($id)
     {
-        $configs = Installation::find($id)->basestation->configuration_base_stations->where('reference_latitude', '<>', NULL)->where('reference_longitude', '<>', NULL);
+        $configs = Installation::find($id)->basestation->configuration_base_stations
+                                          ->where('reference_latitude', '<>', NULL)
+                                          ->where('reference_longitude', '<>', NULL)
+                                          ->sortBy(['configuration_date', 'asc']);
+
         for ($i = count($configs) - 1; $i > 0; $i--)
         {
-            if (($configs[$i]->reference_longitude != $configs[$i-1]->reference_longitude) || ($configs[$i]->reference_latitude != $configs[$i-1]->reference_latitude))
+            if (($configs[$i]->reference_longitude != $configs[$i-1]->reference_longitude) ||
+                ($configs[$i]->reference_latitude  != $configs[$i-1]->reference_latitude))
             {
                 return $configs[$i];
             }
