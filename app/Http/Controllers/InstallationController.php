@@ -141,7 +141,15 @@ class InstallationController extends Controller
      */
     function getAllRovers($id)
     {
-        return Installation::find($id)->basestation->rovers->makeHidden(['default_position','last_communication','battery_voltage']);
+        $rovers = Installation::find($id)->basestation->rovers->makeHidden(['default_position','last_communication','battery_voltage']);
+        
+        // Sort rover array
+        $rovers = $rovers->toArray();
+        usort($rovers, function($a, $b) {
+            return $a['system_id'] <=> $b['system_id'];
+        });
+
+        return $rovers;
     }
 
     /**
@@ -150,7 +158,7 @@ class InstallationController extends Controller
     function getActiveRovers($id)
     {
         $date = $this->getLastReferencePositionChange($id)->configuration_date;
-        $rovers = Installation::find($id)->basestation->rovers->sortBy('id');
+        $rovers = Installation::find($id)->basestation->rovers;
         foreach($rovers as $key => $rover)
         {
             if ((count($rover->positions) == 0) || ($rover->positions->last()->file->creation_time < $date))
@@ -158,6 +166,12 @@ class InstallationController extends Controller
                 $rovers->forget($key);
             }
         }
+
+        // Sort rover array
+        $rovers = $rovers->toArray();
+        usort($rovers, function($a, $b) {
+            return $a['system_id'] <=> $b['system_id'];
+        });
 
         return $rovers;
     }
