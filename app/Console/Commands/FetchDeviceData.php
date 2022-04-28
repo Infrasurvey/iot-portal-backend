@@ -223,13 +223,13 @@ abstract class FetchDeviceData extends Command
         $enu_installation = $this->fromECEFrtoLTP($v0_installation, $v);
         $enu_rover = $this->fromECEFrtoLTP($v0_installation, $v_rover);
 
-        // Update position with new values
-        $position->absolute_easting = $enu_installation["e"];
-        $position->absolute_northing = $enu_installation["n"];
-        $position->absolute_up = $enu_installation["u"];
-        $position->relative_easting = $enu_installation["e"] - $enu_rover["e"];
-        $position->relative_northing = $enu_installation["n"] - $enu_rover["n"];
-        $position->relative_up = $enu_installation["u"] - $enu_rover["u"];
+        // Update position with new values (Store in [cm], not [m] for better displaying on frontend)
+        $position->absolute_easting = $enu_installation["e"] * 100;
+        $position->absolute_northing = $enu_installation["n"] * 100;
+        $position->absolute_up = $enu_installation["u"] * 100;
+        $position->relative_easting = ($enu_installation["e"] - $enu_rover["e"]) * 100;
+        $position->relative_northing = ($enu_installation["n"] - $enu_rover["n"]) * 100;
+        $position->relative_up = ($enu_installation["u"] - $enu_rover["u"]) * 100;
         return $position;
     }
 
