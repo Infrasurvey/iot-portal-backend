@@ -136,7 +136,7 @@ class FetchDeviceDataFtp extends FetchDeviceData
     /**
      * See FetchDeviceData.php
      */
-    protected function getFile($filePath)
+    public function getFile($filePath)
     {
         $filePath = "/data/Geomon/" . $filePath;
         $file = fopen("temp.txt", "w");
@@ -165,7 +165,7 @@ class FetchDeviceDataFtp extends FetchDeviceData
     /**
      * See FetchDeviceData.php
      */
-    protected function disconnect()
+    public function disconnect()
     {
         ftp_close($this->ftp);
     }

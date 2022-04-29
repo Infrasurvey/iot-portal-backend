@@ -29,12 +29,12 @@ class AddEastingNorthingValidityColumns extends Migration
         });
 
         // Fill the columns based on the current values
-        Position::chunk(10, function($positions)
+        $f = new FetchDeviceDataFtp;
+        Position::chunk(10, function($positions) use ($f)
         {
             foreach ($positions as $position) 
             {
                 // Calculate the easting - northing - up
-                $f = new FetchDeviceDataFtp;
                 $position = $f->calculateAbsoluteRelativeENU($position);
                 $position->update();
             }

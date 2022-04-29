@@ -40,7 +40,7 @@ class Installation extends Model
     }
 
     public function basestation(){
-        return $this->belongsTo(DeviceBaseStation::class,'device_base_station_id')->with('lastconf');
+        return $this->belongsTo('App\Models\DeviceBaseStation', 'device_base_station_id')->with('lastconf');
     }
 
     public function getDeviceRoverCountAttribute()

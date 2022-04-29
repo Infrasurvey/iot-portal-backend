@@ -90,16 +90,15 @@ abstract class FetchDeviceData extends Command
     }
     
     /**
-     * A PHP function that will calculate the median value
-     * of an array
+     * Calculate the median value of an array.
      * 
-     * @param array $arr The array that you want to get the median value of.
+     * @param arr The array that you want to get the median value of.
      * @return boolean|float|int
      * @throws Exception If it's not an array
      */
     private function getMedian($arr)
     {
-        //Make sure it's an array.
+        // Make sure it's an array.
         if (!is_array($arr))
         {
             throw new Exception('$arr must be an array!');
@@ -111,30 +110,71 @@ abstract class FetchDeviceData extends Command
             return false;
         }
 
-        //Count how many elements are in the array.
+        // Sort array
+        sort($arr);
+
+        // Count how many elements are in the array.
         $num = count($arr);
 
-        //Determine the middle value of the array.
+        // Determine the middle value of the array.
         $middleVal = floor(($num - 1) / 2);
 
-        //If the size of the array is an odd number,
-        //then the middle value is the median.
+        // If the size of the array is an odd number,
+        // then the middle value is the median.
         if($num % 2)
         { 
             return $arr[$middleVal];
         } 
-        //If the size of the array is an even number, then we
-        //have to get the two middle values and get their
-        //average
+        // If the size of the array is an even number, then we
+        // have to get the two middle values and get their
+        // average
         else 
         {
-            //The $middleVal var will be the low
-            //end of the middle
+            // The $middleVal var will be the low
+            // end of the middle
             $lowMid = $arr[$middleVal];
             $highMid = $arr[$middleVal + 1];
-            //Return the average of the low and high.
+            // Return the average of the low and high.
             return (($lowMid + $highMid) / 2);
         }
+    }
+
+    /**
+     * @brief Calculate the middle index between $l (left) and $r (right) indexes.
+     * @param l Left index.
+     * @param r Right index.
+     * @return mid_index Middle index between $l and $r.
+     */
+    private function getMidIndex($l, $r)
+    {
+        $n = $r - $l + 1;
+        $n = (int)(($n + 1) / 2) - 1;
+        return $n + $l;
+    }
+    
+    /**
+     * @brief Get the interquartile range (IQR) of an array.
+     * @param a Array on which the IQR must be calculated.
+     * @return iqr The interquartile range.
+     */
+    public function getInterquartileRange($a)
+    {
+        sort($a);
+        $n = count($a);
+
+        //If it's an empty array, return 0.
+        if (empty($a))
+        {
+            return 0;
+        }
+    
+        // Find indexes
+        $q2 = $this->getMidIndex(0, $n);    // Q2 = second quartile index (median)
+        $q1 = $this->getMidIndex(0, $q2);   // Q1 = first quartile index
+        $q3 = $this->getMidIndex($q2, $n);  // Q3 = third quartile index
+    
+        // Return interquartile range (IQR)
+        return $a[$q3] - $a[$q1];
     }
 
     /**
@@ -201,7 +241,6 @@ abstract class FetchDeviceData extends Command
         $reference_rover = $position->device_rover->positions->first();
         foreach($configurations as $configuration)
         {
-            $titi = $configuration->file->upload_time;
             if ($configuration->file->upload_time <= $position->file->upload_time)
             {
                 $reference_configuration = $configuration;
@@ -762,73 +801,88 @@ abstract class FetchDeviceData extends Command
                 }
 
                 echo("Processing position : $posPath\n");
-
-                $i = 0;
                 unset($positions);
+                unset($n18_latitude);
+                unset($n18_longitude);
+                unset($n18_height);
+                unset($n90);
                 $positions = array();
-                foreach($myFileRows as $myFileRow)
+                $n18_latitude = array();
+                $n18_longitude = array();
+                $n18_height = array();
+                $n90 = array();
+                for($i = 0; $i < count($myFileRows); $i++)
                 {
-                    preg_match_all("([:\/\-\d.]+)", $myFileRow, $matches);
+                    preg_match_all("([:\/\-\d.]+)", $myFileRows[$i], $matches);
                     $matches = $matches[0];
+                    $positions['latitude'][$i]  = $matches[2];
+                    $positions['longitude'][$i] = $matches[3];
+                    $positions['height'][$i]    = $matches[4];
+                    $positions['Q'][$i]         = $matches[5];
+                    $positions['ns'][$i]        = $matches[6];
+                    $positions['sdn'][$i]       = $matches[7];
+                    $positions['sde'][$i]       = $matches[8];
+                    $positions['sdu'][$i]       = $matches[9];
+                    $positions['sdne'][$i]      = $matches[10];
+                    $positions['sdeu'][$i]      = $matches[11];
+                    $positions['sdun'][$i]      = $matches[12];
 
-                    // Check that Q = 1
-                    if ($matches[5] == 1)
+                    // Calculate n18 (position samples with Q = 1 in the last 18 position samples)
+                    if (count($myFileRows) - $i <= 18)
                     {
-                        $positions['latitude'][$i]  = $matches[2];
-                        $positions['longitude'][$i] = $matches[3];
-                        $positions['height'][$i]    = $matches[4];
-                        $positions['Q'][$i]         = $matches[5];
-                        $positions['ns'][$i]        = $matches[6];
-                        $positions['sdn'][$i]       = $matches[7];
-                        $positions['sde'][$i]       = $matches[8];
-                        $positions['sdu'][$i]       = $matches[9];
-                        $positions['sdne'][$i]      = $matches[10];
-                        $positions['sdeu'][$i]      = $matches[11];
-                        $positions['sdun'][$i]      = $matches[12];
-                        $i++;
+                        if ($positions['Q'][$i] == 1)
+                        {
+                            array_push($n18_latitude, $positions['latitude'][$i]);
+                            array_push($n18_longitude, $positions['longitude'][$i]);
+                            array_push($n18_height, $positions['height'][$i]);
+                        }
+                    }
+
+                    // Calculate n90 (position samples with Q = 1 in the last 90 position samples)
+                    if (count($myFileRows) - $i <= 90)
+                    {
+                        if ($positions['Q'][$i] == 1)
+                        {
+                            array_push($n90, $positions['height'][$i]);
+                        }
                     }
                 }
 
-                // Check that there are positions with Q = 1, then...
-                if ($i == 0)
+                // If n18 = 0 -> Ignore file
+                if (count($n18_height) == 0)
                 {
-                    echo("No position with Q = 1 in file $posPath -> Operation aborted\n");
+                    echo("No valid position in last 18 samples in $posPath -> Operation aborted\n");
                     continue;
                 }
                 
                 // Update/save the position file
                 $file = $this->saveFile("pos", 1, $posPath);
 
-                // Check position existency in the database or save it
-                $deviceRoverSystemId = substr($posPath, 0, -4);
-                $deviceRoverSystemId = intval(substr($deviceRoverSystemId, 52));
-                
+                // Get rover and base station models
+                $deviceRoverSystemId = intval(substr($posPath, 52, -4));
                 $deviceRover = DeviceRover::whereHas('device', function ($query) use ($deviceRoverSystemId) {
                     return $query->where('system_id', $deviceRoverSystemId);
                 })->where('device_base_station_id', $deviceBaseStation->id)->first();
 
-                if ($deviceRover == null)
-                {
-                    echo("Position file corresponding to a non-existing rover ($deviceRoverSystemId)\n");
-                    continue;
-                }
-                
+                // Check position existency in the database or save it
                 $position = Position::where([['device_rover_id', $deviceRover->id], ['file_id', $file->id]])->first();
                 if ($position == null)
                 {
                     $position = new Position;
                     $position->device_rover_id = $deviceRover->id;
                     $position->file_id = $file->id;
-                    $position->height = $this->getMedian($positions['height']);
-                    $position->latitude = $this->getMedian($positions['latitude']);
-                    $position->longitude = $this->getMedian($positions['longitude']);
+                    $position->height = $this->getMedian($n18_height);
+                    $position->latitude = $this->getMedian($n18_latitude);
+                    $position->longitude = $this->getMedian($n18_longitude);
                     $position->nbr_of_samples = count($myFileRows);
                     $position->nbr_of_samples_where_q_equal_1 = count($positions['Q']);
+                    $position->n18 = count($n18_height);
+                    $position->n90 = count($n90);
+                    $position->iqrh90 = $this->getInterquartileRange($n90);
                     $position->nbr_of_satellites = ceil(array_sum($positions['ns']) / count($positions['ns']));
                     $position->save();
                     $position = $this->calculateAbsoluteRelativeENU($position);
                     $position->update();
-                    // Calulate the easting, northing and up
                 }
             }
         }
